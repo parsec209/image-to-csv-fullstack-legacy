@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: Uploader.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: Uploader.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/**
+ * Uploader module
+ * @module Uploader
+ */
+
+const {Storage} = require('@google-cloud/storage')
+const storage = new Storage()
+const bucket = storage.bucket(process.env.STORAGE_BUCKET)
+const checkFileType = require('file-type')
+const { validateArgs } = require('../util/ArgsValidator')
+const InputError = require('../util/InputError')
+const PostService = require('./PostService')
+const APICount = require('../models/APICount')
+
+
+// @ts-check
+
+
+/**
+ * Class to create an uploader object
+ */
+class Uploader {
+  /**
+   * Create an uploader
+   * @param {UserID} userID - User ID
+   * @param {string} IPAddress - Client's IP address
+   * @param {string} fileBatchID - Batch ID for files
+   * @param {Array&lt;LocalFile>} files - Batch of files to be uploaded
+   */
+  constructor (userID, IPAddress, fileBatchID, files) {
+    validateArgs(['{toHexString: Function, ...}', 'String', 'String', '[{buffer: Uint8Array, originalname: String, mimetype: String, ...}]'], arguments)
+    this.userID = userID
+    this.IPAddress = IPAddress
+    this.fileBatchID = fileBatchID
+    this.files = files
+  }
+  
+
+  /**
+   * Validate file types using their magic numbers
+   * @return {Promise&lt;void>}
+   */
+  async checkFileFormats() {
+    const checkedFiles = this.files.map(async function(file) {
+      const fileType = await checkFileType.fromBuffer(file.buffer)
+      if (!fileType || !['tif', 'pdf', 'gif'].includes(fileType.ext)) {
+        throw new InputError('File format not supported. Accepted file formats: pdf, gif, tif', 400)
+      } 
+    })
+    await Promise.all(checkedFiles)
+  }
+
+
+  /**
+   * Upload files to GCP storage bucket 
+   * @return {Promise&lt;void>}
+   */
+  async uploadToCloud() {
+    const self = this
+    const uploaded = this.files.map(function(file) {
+      return new Promise(function(resolve, reject) {
+        const blob = bucket.file(`${self.userID}/uploads/${self.fileBatchID}/${file.originalname}`)
+        const blobStream = blob.createWriteStream({ 
+          metadata: { contentType: file.mimetype } 
+        })
+        blobStream.on('finish', function() {
+          resolve()
+        })
+        blobStream.on('error', function(err) {
+          reject(err)
+        })
+        blobStream.end(file.buffer)
+      })
+    })
+    await Promise.all(uploaded)
+  }
+
+
+  /**
+   * Check if user or IP address has exceeded upload limit
+   * @return {Promise&lt;void>}
+   */
+  async logUploadAPICount() {
+    let userLimit
+    let IPLimit
+    const postService = new PostService(APICount)
+    if (process.env.NODE_ENV === 'test') {
+      userLimit = 3
+      IPLimit = 3
+    } else {
+      userLimit = 20
+      IPLimit = 20
+    }
+    const userCount = await postService.findAll({ 'user.id': this.userID, type: 'upload' })
+    const userCountAfterUpload = userCount.length + this.files.length
+    const IPCount  = await postService.findAll({ IPAddress: this.IPAddress, type: 'upload' })
+    const IPCountAfterUpload = IPCount.length + this.files.length
+    if (userCountAfterUpload > userLimit || IPCountAfterUpload > IPLimit) {
+      throw new InputError(`This file batch will exceed your upload limit. Uploads remaining with user account: ${userLimit - userCount.length}; uploads remaining with this IP address: ${IPLimit - IPCount.length}`, 400)
+    } else {
+      await Promise.all(this.files.map(async file => await postService.post({ IPAddress: this.IPAddress, user: { id: this.userID }, type: 'upload' })))
+    }
+  }
+}
+
+
+module.exports = Uploader
+
+
+
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Img-To-CSV Services</a></h2><h3>Modules</h3><ul><li><a href="module-CellValueGenerator.html">CellValueGenerator</a></li><li><a href="module-CSVGenerator.html">CSVGenerator</a></li><li><a href="module-CSVWriter.html">CSVWriter</a></li><li><a href="module-PasswordReset.html">PasswordReset</a></li><li><a href="module-PostService.html">PostService</a></li><li><a href="module-TextExtractor.html">TextExtractor</a></li><li><a href="module-TextLineGenerator.html">TextLineGenerator</a></li><li><a href="module-Uploader.html">Uploader</a></li><li><a href="module-ZipWriter.html">ZipWriter</a></li></ul><h3>Classes</h3><ul><li><a href="module-CellValueGenerator-CellValueGenerator.html">CellValueGenerator</a></li><li><a href="module-CSVGenerator-CSVGenerator.html">CSVGenerator</a></li><li><a href="module-CSVWriter-CSVWriter.html">CSVWriter</a></li><li><a href="module-PostService-PostService.html">PostService</a></li><li><a href="module-TextExtractor-TextExtractor.html">TextExtractor</a></li><li><a href="module-TextLineGenerator-TextLineGenerator.html">TextLineGenerator</a></li><li><a href="module-Uploader-Uploader.html">Uploader</a></li><li><a href="module-ZipWriter-ZipWriter.html">ZipWriter</a></li></ul><h3>Tutorials</h3><ul><li><a href="tutorial-CellValueGenerator-tutorial.html">CellValueGenerator</a></li><li><a href="tutorial-TextLineGenerator-tutorial.html">TextLineGenerator</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.6</a> on Tue Jan 12 2021 03:57:42 GMT-0500 (Eastern Standard Time)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

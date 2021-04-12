@@ -1,0 +1,223 @@
+[
+  {
+    "name": "GIF.GIF",
+    "idPhrase": "564",
+    "header": [
+      { "value" : "Date" },
+      { "value" : "Description" }
+    ],
+    "dataRows": [
+      { "dataCells": [ 
+        { "cellSects": [
+          {
+            "searchOrInputMethod": "today", 
+            "dateFormat": "DD-MMM-YY"
+          }
+        ]},
+        { "cellSects": [
+          {
+            "searchOrInputMethod": "topPhrase", 
+            "phraseOrValue": "DESCRIPTION"
+          }
+        ]}
+      ]}
+    ]
+  },
+
+  {
+    "name": "PDF_editable.pdf",
+    "idPhrase": "Expense Report",
+    "header": [
+      { "value" : "Invoice #" },
+      { "value" : "Custom Value" }
+    ],
+    "dataRows": [
+      { "dataCells": [ 
+        { "cellSects": [
+          {
+            "searchOrInputMethod": "topPhrase", 
+            "phraseOrValue": "Invoice #"
+          }
+        ]},
+        {
+          "cellSects": [
+            {
+              "searchOrInputMethod": "customValue", 
+              "phraseOrValue": "test"
+            },
+            {
+              "searchOrInputMethod": "customValue", 
+              "phraseOrValue": "123"
+            }
+        ]}
+      ]},
+      { "dataCells": [ 
+        { "cellSects": [
+          {}
+        ]},
+        {
+          "cellSects": [
+            {
+              "searchOrInputMethod": "customValue", 
+              "phraseOrValue": "test",
+              "appendChars": " "
+            },
+            {
+              "searchOrInputMethod": "customValue", 
+              "phraseOrValue": "456"
+            }
+        ]}
+      ]}
+    ]
+  },
+
+  {
+    "name": "PDF_editable.pdf--cellValue_test",
+    "idPhrase": "Your City, ST 12345",
+    "header": [
+      { "value" : "1" },
+      { "value" : "2" },
+      { "value" : "3" },
+      { "value" : "4" },
+      { "value" : "5" },
+      { "value" : "6" },
+      { "value" : "7" },
+      { "value" : "8" }
+    ],
+    "dataRows": [
+      { "dataCells": [ 
+        { "cellSects": [
+          {
+            "searchOrInputMethod": "customValue",
+            "phraseOrValue": "2014-08-02",
+            "dateFormat": "MM/DD/YYYY",
+            "daysAdded": 10
+          },
+          {
+            "searchOrInputMethod": "customValue",
+            "phraseOrValue": "8/14",
+            "dateFormat": "MM-DD-YYYY",
+            "daysAdded": 10
+          },
+          {
+            "searchOrInputMethod": "customValue",
+            "phraseOrValue": "August 2005",
+            "dateFormat": "YY-MM-DD",
+            "daysAdded": 10
+          },
+          {
+            "searchOrInputMethod": "customValue",
+            "phraseOrValue": "07-10-2016",
+            "dateFormat": "Y YY YYY, YYYY, YYYYY-D-DD-DDD-DDDD-DDDDD/M/MM/MMM/MMMM/MMMMM",
+            "daysAdded": 10
+          }
+        ]},
+        { "cellSects": [
+          {
+            "searchOrInputMethod": "customValue",
+            "phraseOrValue": "testDate",
+            "dateFormat": "YYYY-MM-DD",
+            "daysAdded": 2
+          },
+          {
+            "searchOrInputMethod": "pattern",
+            "phraseOrValue": "[a-zA-Z]{9}\\s[a-z]{2}\\s[0-9]{2}/[0-9]{2}/[0-9]{4}"
+          },
+          {
+            "searchOrInputMethod": "pattern",
+            "phraseOrValue": "6h4i8tjhf"    
+          },
+          {
+            "searchOrInputMethod": "leftPhrase",
+            "phraseOrValue": "123"   
+          }
+        ]},
+        { "cellSects": [
+          {
+            "searchOrInputMethod": "leftPhrase",
+            "phraseOrValue": "Adjustments"
+          },
+          {
+            "searchOrInputMethod": "leftPhrase",
+            "phraseOrValue": "Qty"
+          },
+          {
+            "searchOrInputMethod": "leftPhrase",
+            "phraseOrValue": "dgpdhif"
+          },
+          {
+            "searchOrInputMethod": "leftPhrase",
+            "phraseOrValue": "Item"
+          }
+        ]},
+        { "cellSects": [
+          {
+            "searchOrInputMethod": "leftPhrase",
+            "phraseOrValue": "Description"
+          },
+          {
+            "searchOrInputMethod": "topPhrase",
+            "phraseOrValue": "123"
+          },
+          {
+            "searchOrInputMethod": "topPhrase",
+            "phraseOrValue": "Expense Report"
+          },
+          {
+            "searchOrInputMethod": "topPhrase",
+            "phraseOrValue": "Employee name"
+          }
+        ]},
+        { "cellSects": [
+          {
+            "searchOrInputMethod": "topPhrase",
+            "phraseOrValue": "Date"
+          },
+          {
+            "searchOrInputMethod": "topPhrase",
+            "phraseOrValue": "(123) 456-7890"
+          },
+          {
+            "searchOrInputMethod": "topPhrase",
+            "phraseOrValue": "Category"
+          },
+          {
+            "searchOrInputMethod": "topPhrase",
+            "phraseOrValue": "ffgjidp,"
+          }
+        ]},
+        { "cellSects": [
+          {
+            "searchOrInputMethod": "pattern",
+            "phraseOrValue": "[a-zA-Z]{4}\\s[a-zA-Z]{7}",
+            "appendChars": "---238HR"
+          },
+          {
+            "searchOrInputMethod": "topPhrase",
+            "phraseOrValue": "Due date",
+            "dateFormat": "DD-MMM-YYYY"
+          },
+          {
+            "searchOrInputMethod": "leftPhrase",
+            "phraseOrValue": "Flight #123",
+            "appendChars": "  / @ "
+          },
+          {
+            "searchOrInputMethod": "customValue",
+            "phraseOrValue": "test value"
+          }
+        ]},
+        { "cellSects": [
+          {
+            "searchOrInputMethod": "today"      
+          }
+        ]},
+        { "cellSects": [
+          {}
+        ]}
+      ]}
+    ]
+  } 
+  
+]
+

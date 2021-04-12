@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: CSVGenerator.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: CSVGenerator.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/**
+ * CSVGenerator module - see {@tutorial CSVGenerator-tutorial}
+ * @module CSVGenerator
+ */
+
+const {Storage} = require('@google-cloud/storage')
+const storage = new Storage()
+const bucket = storage.bucket(process.env.STORAGE_BUCKET)
+const TextExtractor = require('./TextExtractor')
+const TextLineGenerator = require('./TextLineGenerator')
+const CellValueGenerator = require('./CellValueGenerator')
+const CSVWriter = require('./CSVWriter')
+const PostService = require('./PostService')
+const Doc = require('../models/doc')
+const { validateArgs } = require('../util/ArgsValidator')
+const InputError = require('../util/InputError')
+const APICount = require('../models/APICount')
+
+
+// @ts-check
+
+
+/**
+ * Class to create csvGenerator object
+ */
+class CSVGenerator {
+  /**
+   * Create csvGenerator 
+   * @param {UserID} userID - User ID
+   * @param {string} IPAddress - Client's IP address
+   * @param {string} fileBatchID - Batch ID for files
+   * @param {Array&lt;number>} pageSelections - Page numbers to scan for this file batch
+   * @param {string} dateToday - Today's date
+   */
+  constructor (userID, IPAddress, fileBatchID, pageSelections, dateToday) {
+    validateArgs(['{toHexString: Function, ...}', 'String', 'String', '[Number]', 'String'], arguments)
+    this.userID = userID
+    this.IPAddress = IPAddress
+    this.fileBatchID = fileBatchID
+    this.pageSelections = pageSelections
+    this.dateToday = dateToday
+  }
+
+
+  /**
+   * Check if user or IP address has exceeded page text extraction limit
+   * @param {Array&lt;CloudFile>} docs - Document files from GCP storage bucket
+   * @returns {Promise&lt;void>}
+   */
+  async logExtractionAPICount(docs) {
+    let userLimit
+    let IPLimit
+    const postService = new PostService(APICount)
+    if (process.env.NODE_ENV === 'test') {
+      userLimit = 9
+      IPLimit = 9
+    } else {
+      userLimit = 20
+      IPLimit = 20
+    }
+    const userCount = await postService.findAll({ 'user.id': this.userID, type: 'extract' })
+    const userCountAfterExtraction = userCount.length + docs.length * this.pageSelections.length
+    const IPCount  = await postService.findAll({ IPAddress: this.IPAddress, type: 'extract' })
+    const IPCountAfterExtraction = IPCount.length + docs.length * this.pageSelections.length
+    if (userCountAfterExtraction > userLimit || IPCountAfterExtraction > IPLimit) {
+      throw new InputError(`This file batch and page selections will exceed your page limit. Pages remaining with user account: ${userLimit - userCount.length}; pages remaining with this IP address: ${IPLimit - IPCount.length}`, 400)
+    } else {
+      await Promise.all(docs.map(async doc => await postService.post({ IPAddress: this.IPAddress, user: { id: this.userID }, type: 'extract' })))
+    }
+  }
+
+
+  /**
+   * Parses each document's text to see if it contains one of the recurring document ID phrases 
+   * @param {Array&lt;DocText>} docsText - Extracted text from all the docs in the batch
+   * @param {Array&lt;Object>} recurringDocs - Mongoose Doc model instances (recurring documents)
+   * @returns {{matchedDocsText: Array&lt;string>, unmatchedDocsText: Array&lt;string>, matchedRecurringDocs: Array&lt;{fileName: string, recurringDoc: Object}>}} - Lists of the scanned doc filenames where ID phrases were found, not found, and the recurring doc instances associated with those ID phrases   
+   */
+  identifyDocText(docsText, recurringDocs) {
+    validateArgs(['[{fileName: String, extraction: Array}]', '[{_id: Object, name: String, idPhrase: String, header: Array, dataRows: Array, user: Object, ...}]'], arguments)
+    const matchedDocsText = []
+    const unmatchedDocsText = []
+    const matchedRecurringDocs = []
+    docsText.forEach(function(docText) {
+      for (let i = 0; i &lt; docText.extraction.length; i++) {
+        let page = docText.extraction[i]
+        for (let i = 0; i &lt; recurringDocs.length; i++) {
+          let recurringDoc = recurringDocs[i]
+          if (page.fullTextAnnotation &amp;&amp; page.fullTextAnnotation.text.includes(recurringDoc.idPhrase)) {
+            matchedRecurringDocs.push({ fileName: docText.fileName, recurringDoc })
+            matchedDocsText.push(docText.fileName)
+            return
+          }          
+        }
+      }
+      unmatchedDocsText.push(docText.fileName)
+    })
+    return { matchedDocsText, unmatchedDocsText, matchedRecurringDocs }
+  }
+
+
+  /**
+   * Process starting at file batch text extraction up to CSV files being written and uploaded to GCP storage bucket
+   * @returns {Promise&lt;{identifiedDocs: Array&lt;string>, unidentifiedDocs: Array&lt;string>}>} - Lists of filenames in the batch that were identified, and not identified, with recurring doc ID phrases
+   */
+  async compileData() {
+    const self = this
+    const docs = await bucket.getFiles({ directory: `${this.userID}/uploads/${this.fileBatchID}` })
+    await this.logExtractionAPICount(docs[0])
+    const docsText = await Promise.all(docs[0].map(async function(doc) {
+      const textExtractor = new TextExtractor(doc, self.pageSelections)
+      return await textExtractor.getDocText()
+    }))
+    const postService = new PostService(Doc)
+    const recurringDocs = await postService.findAll({ 'user.id': this.userID })
+    let { matchedDocsText, unmatchedDocsText, matchedRecurringDocs } = this.identifyDocText(docsText, recurringDocs)
+    const CSVBlueprints = matchedDocsText.map(matchedDocText => {
+      const docText = docsText.find(docText => docText.fileName === matchedDocText)
+      const recurringDoc = matchedRecurringDocs.find(matchedRecurringDoc => matchedRecurringDoc.fileName === matchedDocText).recurringDoc
+      const textLineGenerator = new TextLineGenerator(docText)
+      const docTextLines = textLineGenerator.getDocLines()
+      textLineGenerator.sortDocLines(docTextLines) 
+      const cellValueGenerator = new CellValueGenerator(docText, docTextLines, recurringDoc, self.dateToday)
+      const CSVBlueprint = cellValueGenerator.getCSVBlueprint()
+      return CSVBlueprint
+    })
+    if (CSVBlueprints.length) {
+      const csvWriter = new CSVWriter(this.userID, this.fileBatchID, CSVBlueprints)
+      const consolidatedBlueprints = csvWriter.getConsolidatedBlueprints()
+      await csvWriter.writeCSVFiles(consolidatedBlueprints)
+    }
+    return { identifiedDocs: matchedDocsText, unidentifiedDocs: unmatchedDocsText }
+  }
+}
+
+module.exports = CSVGenerator
+
+
+
+
+
+
+
+
+
+
+
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Img-To-CSV Services</a></h2><h3>Modules</h3><ul><li><a href="module-CellValueGenerator.html">CellValueGenerator</a></li><li><a href="module-CSVGenerator.html">CSVGenerator</a></li><li><a href="module-CSVWriter.html">CSVWriter</a></li><li><a href="module-PasswordReset.html">PasswordReset</a></li><li><a href="module-PostService.html">PostService</a></li><li><a href="module-TextExtractor.html">TextExtractor</a></li><li><a href="module-TextLineGenerator.html">TextLineGenerator</a></li><li><a href="module-Uploader.html">Uploader</a></li><li><a href="module-ZipWriter.html">ZipWriter</a></li></ul><h3>Classes</h3><ul><li><a href="module-CellValueGenerator-CellValueGenerator.html">CellValueGenerator</a></li><li><a href="module-CSVGenerator-CSVGenerator.html">CSVGenerator</a></li><li><a href="module-CSVWriter-CSVWriter.html">CSVWriter</a></li><li><a href="module-PostService-PostService.html">PostService</a></li><li><a href="module-TextExtractor-TextExtractor.html">TextExtractor</a></li><li><a href="module-TextLineGenerator-TextLineGenerator.html">TextLineGenerator</a></li><li><a href="module-Uploader-Uploader.html">Uploader</a></li><li><a href="module-ZipWriter-ZipWriter.html">ZipWriter</a></li></ul><h3>Tutorials</h3><ul><li><a href="tutorial-CellValueGenerator-tutorial.html">CellValueGenerator</a></li><li><a href="tutorial-TextLineGenerator-tutorial.html">TextLineGenerator</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.6</a> on Tue Jan 12 2021 03:57:42 GMT-0500 (Eastern Standard Time)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

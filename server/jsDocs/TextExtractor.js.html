@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: TextExtractor.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: TextExtractor.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/**
+ * TextExtractor module
+ * @module TextExtractor
+ */
+
+//Code in this file borrows from Google LLC's sample code found at the following URL: 
+//https://github.com/googleapis/nodejs-vision/blob/master/samples/batch-annotate-files-gcs.js 
+//Please navigate to this URL to see the exact uses and modifications of Google's code. 
+ 
+//Below is the original copyright notice from Google LLC's sample code: 
+
+// Copyright 2019 Google LLC
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+
+const { validateArgs } = require('../util/ArgsValidator')
+const { ImageAnnotatorClient } = require('@google-cloud/vision').v1
+const client = new ImageAnnotatorClient()
+const path = require('path')
+
+// @ts-check
+
+
+/**
+ * Class to create a textExtractor object
+ */
+class TextExtractor {
+  /**
+   * Creates a textExtractor
+   * @param {CloudFile} doc - Doc file from GCP storage bucket
+   * @param {Array&lt;number>} pageSelections - Page numbers to scan for this file batch
+   */
+  constructor (doc, pageSelections) {
+    validateArgs(['Object', '[Number]'], arguments)
+    this.doc = doc
+    this.pageSelections = pageSelections
+  }
+
+
+  /**
+   * Extract text from doc using GCP Vision API
+   * @returns {Promise&lt;DocText>} - Document text annotations with original filename 
+   */
+  async getDocText() {
+    const inputConfig = {
+      // Supported mime_types: application/pdf, image/tiff, image/gif
+      mimeType: this.doc.metadata.contentType,
+      gcsSource: {
+        uri: `gs://${process.env.STORAGE_BUCKET}/${this.doc.name}`
+      },
+    }
+    const features = [
+      {type: 'DOCUMENT_TEXT_DETECTION'}
+    ]
+    const fileRequest = {
+      inputConfig,
+      features,
+      // First page starts at 1. Last page starts at -1. Max five pages. 
+      pages: this.pageSelections,
+      imageContext: { 
+        // English encoding
+        languageHints: ['en'],
+      }
+    }
+    const request = {
+      requests: [fileRequest]
+    }
+    const [result] = await client.batchAnnotateFiles(request)
+    const docText = result.responses[0].responses
+    return { fileName: path.basename(this.doc.name), extraction: docText }
+  }
+}
+
+module.exports = TextExtractor</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Img-To-CSV Services</a></h2><h3>Modules</h3><ul><li><a href="module-CellValueGenerator.html">CellValueGenerator</a></li><li><a href="module-CSVGenerator.html">CSVGenerator</a></li><li><a href="module-CSVWriter.html">CSVWriter</a></li><li><a href="module-PasswordReset.html">PasswordReset</a></li><li><a href="module-PostService.html">PostService</a></li><li><a href="module-TextExtractor.html">TextExtractor</a></li><li><a href="module-TextLineGenerator.html">TextLineGenerator</a></li><li><a href="module-Uploader.html">Uploader</a></li><li><a href="module-ZipWriter.html">ZipWriter</a></li></ul><h3>Classes</h3><ul><li><a href="module-CellValueGenerator-CellValueGenerator.html">CellValueGenerator</a></li><li><a href="module-CSVGenerator-CSVGenerator.html">CSVGenerator</a></li><li><a href="module-CSVWriter-CSVWriter.html">CSVWriter</a></li><li><a href="module-PostService-PostService.html">PostService</a></li><li><a href="module-TextExtractor-TextExtractor.html">TextExtractor</a></li><li><a href="module-TextLineGenerator-TextLineGenerator.html">TextLineGenerator</a></li><li><a href="module-Uploader-Uploader.html">Uploader</a></li><li><a href="module-ZipWriter-ZipWriter.html">ZipWriter</a></li></ul><h3>Tutorials</h3><ul><li><a href="tutorial-CellValueGenerator-tutorial.html">CellValueGenerator</a></li><li><a href="tutorial-TextLineGenerator-tutorial.html">TextLineGenerator</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.6</a> on Tue Jan 12 2021 03:57:42 GMT-0500 (Eastern Standard Time)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

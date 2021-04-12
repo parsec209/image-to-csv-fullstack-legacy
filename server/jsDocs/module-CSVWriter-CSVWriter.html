@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Class: CSVWriter</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Class: CSVWriter</h1>
+
+    
+
+
+
+
+<section>
+
+<header>
+    
+        <h2><span class="attribs"><span class="type-signature"></span></span>
+            <span class="ancestors"><a href="module-CSVWriter.html">CSVWriter</a>~</span>CSVWriter<span class="signature">(userID, fileBatchID, CSVBlueprints)</span><span class="type-signature"></span></h2>
+        
+            <div class="class-description"><p>Class to create csvWriter object</p></div>
+        
+    
+</header>
+
+<article>
+    <div class="container-overview">
+    
+        
+
+    
+    <h2>Constructor</h2>
+    
+
+    
+    <h4 class="name" id="CSVWriter"><span class="type-signature"></span>new CSVWriter<span class="signature">(userID, fileBatchID, CSVBlueprints)</span><span class="type-signature"></span></h4>
+    
+
+    
+
+
+
+<div class="description">
+    <p>Create csvWriter</p>
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>userID</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type"><a href="global.html#UserID">UserID</a></span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>User ID</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>fileBatchID</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>Batch ID for files</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>CSVBlueprints</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Array.&lt;<a href="global.html#CSVBlueprint">CSVBlueprint</a>></span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>Array of CSV blueprints</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="services_CSVWriter.js.html">services/CSVWriter.js</a>, <a href="services_CSVWriter.js.html#line19">line 19</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    
+    </div>
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+        <h3 class="subsection-title">Methods</h3>
+
+        
+            
+
+    
+
+    
+    <h4 class="name" id="getConsolidatedBlueprints"><span class="type-signature"></span>getConsolidatedBlueprints<span class="signature">()</span><span class="type-signature"> &rarr; {Array.&lt;<a href="global.html#consolidatedBlueprint">consolidatedBlueprint</a>>}</span></h4>
+    
+
+    
+
+
+
+<div class="description">
+    <p>Prepares blueprints to be writeable to CSV file/s. If any blueprints contain identical headers, their data rows are consolidated into one object</p>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="services_CSVWriter.js.html">services/CSVWriter.js</a>, <a href="services_CSVWriter.js.html#line38">line 38</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    <ul>
+<li>Array of CSV-writeable blueprints</li>
+</ul>
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">Array.&lt;<a href="global.html#consolidatedBlueprint">consolidatedBlueprint</a>></span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+
+
+
+        
+            
+
+    
+
+    
+    <h4 class="name" id="writeCSVFiles"><span class="type-signature">(async) </span>writeCSVFiles<span class="signature">(consolidatedBlueprints)</span><span class="type-signature"> &rarr; {Promise.&lt;void>}</span></h4>
+    
+
+    
+
+
+
+<div class="description">
+    <p>Writes CSV files and uploads them to GCP storage bucket</p>
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>consolidatedBlueprints</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Array.&lt;<a href="global.html#consolidatedBlueprint">consolidatedBlueprint</a>></span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>Array of CSV-writeable blueprints</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="services_CSVWriter.js.html">services/CSVWriter.js</a>, <a href="services_CSVWriter.js.html#line61">line 61</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Returns:</h5>
+
+        
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">Promise.&lt;void></span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+
+
+
+        
+    
+
+    
+
+    
+</article>
+
+</section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Img-To-CSV Services</a></h2><h3>Modules</h3><ul><li><a href="module-CellValueGenerator.html">CellValueGenerator</a></li><li><a href="module-CSVGenerator.html">CSVGenerator</a></li><li><a href="module-CSVWriter.html">CSVWriter</a></li><li><a href="module-PasswordReset.html">PasswordReset</a></li><li><a href="module-PostService.html">PostService</a></li><li><a href="module-TextExtractor.html">TextExtractor</a></li><li><a href="module-TextLineGenerator.html">TextLineGenerator</a></li><li><a href="module-Uploader.html">Uploader</a></li><li><a href="module-ZipWriter.html">ZipWriter</a></li></ul><h3>Classes</h3><ul><li><a href="module-CellValueGenerator-CellValueGenerator.html">CellValueGenerator</a></li><li><a href="module-CSVGenerator-CSVGenerator.html">CSVGenerator</a></li><li><a href="module-CSVWriter-CSVWriter.html">CSVWriter</a></li><li><a href="module-PostService-PostService.html">PostService</a></li><li><a href="module-TextExtractor-TextExtractor.html">TextExtractor</a></li><li><a href="module-TextLineGenerator-TextLineGenerator.html">TextLineGenerator</a></li><li><a href="module-Uploader-Uploader.html">Uploader</a></li><li><a href="module-ZipWriter-ZipWriter.html">ZipWriter</a></li></ul><h3>Tutorials</h3><ul><li><a href="tutorial-CellValueGenerator-tutorial.html">CellValueGenerator</a></li><li><a href="tutorial-CSVGenerator-tutorial.html">CSVGenerator</a></li><li><a href="tutorial-TextLineGenerator-tutorial.html">TextLineGenerator</a></li></ul><h3><a href="global.html">Global</a></h3>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.6</a> on Sun Apr 11 2021 22:56:04 GMT-0400 (Eastern Daylight Time)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

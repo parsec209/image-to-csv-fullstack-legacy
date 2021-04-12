@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TextLineGenerator</title>
+</head>
+<body>
+    <p>
+      This <a href="https://cloud.google.com/vision/docs/reference/rest/v1/AnnotateImageResponse#TextAnnotation">link</a> shows how the GCP Vision API generates its object
+      hierarchy from a page's extracted text (Page-Block-Paragraph-Word-Symbol). Since one of the main parsing techniques in Image-To-CSV is to use single line anchor phrases to 
+      find single line variable phrases within a document's text, a custom object "Line" needed to be created. This line object conceptually represents a single line of text within 
+      GCP's "Paragraph," and were it to exist in said object hierarchy, it would fit in between "Paragraph" and "Word."
+      This module defines a line's text as characters being, at most, one lateral space apart from each other. If a character is proceeded by 
+      two or more spaces, that line ends. Once all the lines are generated and assembled into an array, they are sorted by their vertices in the same order you would intuitively read text 
+      on a page (left to right all the way across the page, then to the next line down). The GCP text output is sorted by "Blocks," so taking the extra step of sorting by lines
+      makes it easier later on to find a line's position in the text relative to another line. 
+    </p>
+</body>
+</html>

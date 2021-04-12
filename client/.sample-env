@@ -1,0 +1,6 @@
+ # After the static assets are built for production, this file is no longer needed. 
+
+VUE_APP_SENTRY_DSN={{Sentry DSN}} 
+
+
+    

@@ -1,0 +1,28 @@
+
+GCP_CRED={{Google Cloud Platform API key}} 
+    # DURING PRODUCTION: Paste your API key JSON object into this env variable in your cloud hosting service. A GCP_CRED.json will be auto-generated during deployment.
+    # DURING DEV/TESTING: Create file named GCP_CRED.json in project root and paste API key JSON object into it. You will not need to use the GCP_CRED env variable.
+
+GOOGLE_APPLICATION_CREDENTIALS=./GCP_CRED.json
+    # Leave this variable as is, it will reference the API key JSON object within GCP_CRED.json.  
+
+SESSION_SECRET={{Express sessions secret}}
+
+MONGODB_URI={{MongoDB connection string}}
+    # You can use either a mongoDB hosting service or a local mongoDB connection. 
+
+STORAGE_BUCKET={{Google Cloud Storage bucket name}}
+
+PAPERTRAIL_HOST={{Host for Solarwinds Papertrail transport}} 
+
+PAPERTRAIL_PORT={{Port for Solarwinds Papertrail transport}}
+
+SENDGRID_API_KEY={{Twilio Sendgrid API key}}
+
+RESETEMAIL={{Email address used by Sendgrid to send password reset emails}}
+
+INVITATION_CODE={{Allows a user to register an account}}
+
+BASE_URL={{Base URL during production}}
+
+

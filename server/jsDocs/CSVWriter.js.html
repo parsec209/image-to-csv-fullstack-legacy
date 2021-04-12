@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: CSVWriter.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: CSVWriter.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/**
+ * CSVWriter module
+ * @module CSVWriter
+ */
+
+const createCSVStringifier = require('csv-writer').createObjectCsvStringifier
+const {Storage} = require('@google-cloud/storage')
+const storage = new Storage()
+const bucket = storage.bucket(process.env.STORAGE_BUCKET)
+const { validateArgs } = require('../util/ArgsValidator')
+
+
+// @ts-check
+
+
+/**
+ * Class to create csvWriter object
+ */
+class CSVWriter {
+  /**
+   * Create csvWriter
+   * @param {UserID} userID - User ID
+   * @param {string} fileBatchID - Batch ID for files
+   * @param {Array&lt;CSVBlueprint>} CSVBlueprints - Array of CSV blueprints
+   */
+  constructor (userID, fileBatchID, CSVBlueprints) {
+    validateArgs(['{toHexString: Function, ...}', 'String', '[{fileName: String, CSVHeader: Array, CSVDataRows: Array}]'], arguments)
+    this.userID = userID
+    this.fileBatchID = fileBatchID
+    this.CSVBlueprints = CSVBlueprints
+  }
+
+
+  /**
+   * The data rows from any CSV blueprints with identical headers will be consolidated into one CSV blueprint under the same header. Otherwise the blueprints remain unchanged.
+   * @returns {Array&lt;CSVBlueprint>} - Array of CSV blueprints, including any that were consolidated
+   */
+  getConsolidatedBlueprints() {
+    const consolidatedBlueprints = []
+    this.CSVBlueprints.forEach(CSVBlueprint => {
+      for (let i = 0; i &lt; consolidatedBlueprints.length; i++) { 
+        if (JSON.stringify(CSVBlueprint.CSVHeader) === JSON.stringify(consolidatedBlueprints[i].header)) {
+          consolidatedBlueprints[i].dataRows.push(...CSVBlueprint.CSVDataRows)
+          return
+        }
+      }
+      consolidatedBlueprints.push({
+        header: CSVBlueprint.CSVHeader,
+        dataRows: CSVBlueprint.CSVDataRows
+      }) 
+    })
+    return consolidatedBlueprints
+  }
+
+  
+  /**
+   * Writes CSV files using the blueprint data and uploads them to GCP storage bucket
+   * @param {Array&lt;CSVBlueprint>} consolidatedBlueprints - Array of CSV blueprints 
+   * @returns {Promise&lt;void>}
+   */
+  async writeCSVFiles(consolidatedBlueprints) {
+    validateArgs(['[{header: Array, dataRows: Array}]'], arguments)
+    const self = this
+    const filesWritten = consolidatedBlueprints.map(function(blueprint, fileNumber) {
+      const CSVStringifier = createCSVStringifier({
+        header: blueprint.header
+      })
+      const header = CSVStringifier.getHeaderString()
+      const dataRows = CSVStringifier.stringifyRecords(blueprint.dataRows)
+      return new Promise((resolve, reject) => {
+        const blob = bucket.file(`${self.userID}/downloads/${self.fileBatchID}/${fileNumber}.csv`)
+        const blobStream = blob.createWriteStream(
+          { 
+            metadata: {
+              contentType: 'text/csv'
+            }
+          }
+        )
+        blobStream.on('finish', () => {
+          resolve()
+        })
+        blobStream.on('error', err => {
+          reject(err)
+        })
+        blobStream.end(header + dataRows)
+      })
+    })
+    await Promise.all(filesWritten)
+  }
+}
+
+
+module.exports = CSVWriter
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Img-To-CSV Services</a></h2><h3>Modules</h3><ul><li><a href="module-CellValueGenerator.html">CellValueGenerator</a></li><li><a href="module-CSVGenerator.html">CSVGenerator</a></li><li><a href="module-CSVWriter.html">CSVWriter</a></li><li><a href="module-PasswordReset.html">PasswordReset</a></li><li><a href="module-PostService.html">PostService</a></li><li><a href="module-TextExtractor.html">TextExtractor</a></li><li><a href="module-TextLineGenerator.html">TextLineGenerator</a></li><li><a href="module-Uploader.html">Uploader</a></li><li><a href="module-ZipWriter.html">ZipWriter</a></li></ul><h3>Classes</h3><ul><li><a href="module-CellValueGenerator-CellValueGenerator.html">CellValueGenerator</a></li><li><a href="module-CSVGenerator-CSVGenerator.html">CSVGenerator</a></li><li><a href="module-CSVWriter-CSVWriter.html">CSVWriter</a></li><li><a href="module-PostService-PostService.html">PostService</a></li><li><a href="module-TextExtractor-TextExtractor.html">TextExtractor</a></li><li><a href="module-TextLineGenerator-TextLineGenerator.html">TextLineGenerator</a></li><li><a href="module-Uploader-Uploader.html">Uploader</a></li><li><a href="module-ZipWriter-ZipWriter.html">ZipWriter</a></li></ul><h3>Tutorials</h3><ul><li><a href="tutorial-CellValueGenerator-tutorial.html">CellValueGenerator</a></li><li><a href="tutorial-TextLineGenerator-tutorial.html">TextLineGenerator</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.6</a> on Tue Jan 12 2021 03:57:42 GMT-0500 (Eastern Standard Time)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Tutorial: CSVGenerator</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Tutorial: CSVGenerator</h1>
+
+    <section>
+
+<header>
+    
+
+    <h2>CSVGenerator</h2>
+</header>
+
+<article>
+    <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CellValueGenerator</title>
+</head>
+<body>
+    <p>
+      The compileData method in this module combines multiple services together to create the CSV generation process. The process begins
+      after the user has uploaded a batch of files (see Uploader service), and ends before the files are zipped (see ZipWriter service).
+      Each step of the method is described below: 
+    </p>
+    <ul>
+      <li>Retrieve the user's current batch of uploaded files from the GCP storage bucket, in the form of GCP File objects</li>
+      <li>Use GCP vision API to extract text from all the files, the result which will collectively be called "docsText," 
+          and an individual doc's text will be called "docText"
+      </li>
+      <li>Use post service to retrieve all doc model instances, aka "recurring docs," from database </li>
+      <li>Parse through docsText to see if any of the files have an ID phrase that matches an ID phrase from a recurring doc
+        <ul>
+          <li>For any files that have a matching ID phrase, their filenames are appended to the matchedDocsText array</li>
+          <li>For any files that do not have a matching ID phrase, their filenames are appended to the unmatchedDocsText array</li>
+          <li>Recurring doc instances that contain the matched ID phrases (if applicable) are appended to the matchedRecurringDocs array</li>
+        </ul>
+      </li>
+      <li>Compile an array of CSV data blueprints. For each filename in the matchedDocsText array:
+        <ul>
+          <li>Retrieve its associated docText, and the recurring doc containing the matching ID phrase</li>
+          <li>Generate text lines ("docTextLines") from the docText</li>
+          <li>Sort the docTextLines</li>
+          <li>Using the docText, docTextLines, and recurring doc as inputs, create a cellValueGenerator instance to compile all the cell values for the future CSV file.
+              <br>
+              The recurring doc will contain rules (created earlier by the user) on what values to look for in the text, and how to obtain them, for every CSV cell. 
+          </li>
+          <li>The cell value data and header data are compiled into a blueprint, and the blueprint is appended to an array with all the other blueprints</li>
+        </ul>
+      </li>
+      <li>If any blueprints contain identical headers, their data rows are consolidated into a single blueprint under the same header</li>
+      <li>Each consolidated blueprint will be used to write a separate CSV file (one CSV file per unique header row). The files are then uploaded into GCP storage bucket</li>
+      <li>A response is sent to the client containing the matchedDocsText and unmatchedDocsText arrays</li>
+    </ul>
+</body>
+</html>
+</article>
+
+</section>
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Img-To-CSV Services</a></h2><h3>Modules</h3><ul><li><a href="module-CellValueGenerator.html">CellValueGenerator</a></li><li><a href="module-CSVGenerator.html">CSVGenerator</a></li><li><a href="module-CSVWriter.html">CSVWriter</a></li><li><a href="module-PasswordReset.html">PasswordReset</a></li><li><a href="module-PostService.html">PostService</a></li><li><a href="module-TextExtractor.html">TextExtractor</a></li><li><a href="module-TextLineGenerator.html">TextLineGenerator</a></li><li><a href="module-Uploader.html">Uploader</a></li><li><a href="module-ZipWriter.html">ZipWriter</a></li></ul><h3>Classes</h3><ul><li><a href="module-CellValueGenerator-CellValueGenerator.html">CellValueGenerator</a></li><li><a href="module-CSVGenerator-CSVGenerator.html">CSVGenerator</a></li><li><a href="module-CSVWriter-CSVWriter.html">CSVWriter</a></li><li><a href="module-PostService-PostService.html">PostService</a></li><li><a href="module-TextExtractor-TextExtractor.html">TextExtractor</a></li><li><a href="module-TextLineGenerator-TextLineGenerator.html">TextLineGenerator</a></li><li><a href="module-Uploader-Uploader.html">Uploader</a></li><li><a href="module-ZipWriter-ZipWriter.html">ZipWriter</a></li></ul><h3>Tutorials</h3><ul><li><a href="tutorial-CellValueGenerator-tutorial.html">CellValueGenerator</a></li><li><a href="tutorial-CSVGenerator-tutorial.html">CSVGenerator</a></li><li><a href="tutorial-TextLineGenerator-tutorial.html">TextLineGenerator</a></li></ul><h3><a href="global.html">Global</a></h3>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.6</a> on Sun Apr 11 2021 22:56:04 GMT-0400 (Eastern Daylight Time)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

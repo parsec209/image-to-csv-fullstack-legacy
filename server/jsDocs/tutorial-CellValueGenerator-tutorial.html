@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Tutorial: CellValueGenerator</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Tutorial: CellValueGenerator</h1>
+
+    <section>
+
+<header>
+    
+
+    <h2>CellValueGenerator</h2>
+</header>
+
+<article>
+    <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CellValueGenerator</title>
+</head>
+<body>
+    <p>
+      This module contains the methods used for obtaining CSV cell section values from an uploaded file's text. Some of the 
+      methods are straightforward. For instance, the "pattern" method searches for text that matches a regular expression 
+      provided by the user. The "customValue" is just a literal value provided by the user, no text parsing necessary. The "today" method uses today's date
+      (more specifically the date from the user's browser) as the value.
+      <br>
+      <br>
+      The positional "topPhrase" and "leftPhrase" methods are a bit more complicated. First, the term "phrase" has a specific meaning in the context of this application. It is a 
+      single line of text consisting of characters no more than one space apart from each other. A phrase ends when a character is proceeded by two or more spaces, a line break, or a
+      page break. Furthermore, what we're using in these methods are "anchor phrases," meaning a phrase within a recurring document that has the following constants: 1) it is always 
+      in the same exact position of the document relative to the sought-after variable value, and 2) it is always the same phrase. The leftPhrase option uses an anchor phrase provided by the user 
+      that is known to always be located directly to the left of the variable value ("directly" meaning there are no nonspace characters in between the anchor phrase and the variable value). 
+      The anchor phrase will be contained in the text property of a line object (generated earlier in the TextLineGenerator module), and it will encompass either
+      part of this line's text or all of it. The index of the line text where the phrase ends
+      is important to note here; if there is additional text in the line after the phrase ends, the rest of that same line's text will be used as the cell section value. Otherwise, 
+      the cell section value will be obtained from the next line's text, which will be directly to the right of the line containing the anchor phrase. 
+      <br>
+      <br>
+      The topPhrase uses an anchor phrase provided by the user that is known to always be positioned directly above the variable value ("directly" meaning it is first phrase above the  
+      variable value that shares an x-coordinate with it). Once again, this anchor phrase will be contained within the text property of a line object. Once that line is found, 
+      the app will then look for the first line directly below it that shares an x-coordinate with it. If said line exists, its text will be used as the cell section value.      
+    </p>
+</body>
+</html>
+</article>
+
+</section>
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Img-To-CSV Services</a></h2><h3>Modules</h3><ul><li><a href="module-CellValueGenerator.html">CellValueGenerator</a></li><li><a href="module-CSVGenerator.html">CSVGenerator</a></li><li><a href="module-CSVWriter.html">CSVWriter</a></li><li><a href="module-PasswordReset.html">PasswordReset</a></li><li><a href="module-PostService.html">PostService</a></li><li><a href="module-TextExtractor.html">TextExtractor</a></li><li><a href="module-TextLineGenerator.html">TextLineGenerator</a></li><li><a href="module-Uploader.html">Uploader</a></li><li><a href="module-ZipWriter.html">ZipWriter</a></li></ul><h3>Classes</h3><ul><li><a href="module-CellValueGenerator-CellValueGenerator.html">CellValueGenerator</a></li><li><a href="module-CSVGenerator-CSVGenerator.html">CSVGenerator</a></li><li><a href="module-CSVWriter-CSVWriter.html">CSVWriter</a></li><li><a href="module-PostService-PostService.html">PostService</a></li><li><a href="module-TextExtractor-TextExtractor.html">TextExtractor</a></li><li><a href="module-TextLineGenerator-TextLineGenerator.html">TextLineGenerator</a></li><li><a href="module-Uploader-Uploader.html">Uploader</a></li><li><a href="module-ZipWriter-ZipWriter.html">ZipWriter</a></li></ul><h3>Tutorials</h3><ul><li><a href="tutorial-CellValueGenerator-tutorial.html">CellValueGenerator</a></li><li><a href="tutorial-CSVGenerator-tutorial.html">CSVGenerator</a></li><li><a href="tutorial-TextLineGenerator-tutorial.html">TextLineGenerator</a></li></ul><h3><a href="global.html">Global</a></h3>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.6</a> on Sun Apr 11 2021 22:56:04 GMT-0400 (Eastern Daylight Time)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

@@ -1,0 +1,16 @@
+{
+  "source": {
+    "include": ["server/services", "server/util/jsDocTypes.js"]
+  },
+  "plugins": ["plugins/markdown"],
+  "templates": {
+    "cleverLinks": true,
+    "monospaceLinks": true
+  },
+  "opts": {
+    "recurse": true,
+    "destination": "server/jsDocs",
+    "template": "server/jsDocs/custom-docs-template",
+    "tutorials": "server/jsDocs/tutorials"
+  }
+}
