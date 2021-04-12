@@ -31,7 +31,7 @@ npm test
 cd client
 npm install
 
-# Add Sentry DSN env var
+# Add Sentry DSN and hostname env vars
 cd client
 <See .sample-env in client folder>
 

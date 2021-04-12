@@ -2,5 +2,5 @@
 
 VUE_APP_SENTRY_DSN={{Sentry DSN}} 
 
-
+VUE_APP_HOST_NAME={{window.location.hostname}}
     
