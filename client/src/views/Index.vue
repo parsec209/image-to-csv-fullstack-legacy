@@ -26,7 +26,10 @@
               :variant="alternateRowColors(index)"
             >
               {{ template.name }}
-              <b-badge href="#"  @click="deleteTemplate(template)" variant="secondary">Delete</b-badge>
+              <div>
+                <b-badge class="mr-1" href="#"  @click="deleteTemplate(template)" variant="secondary">Delete</b-badge>
+                <b-badge href="#"  @click="copyTemplate(template)" variant="secondary">Copy</b-badge>
+              </div>
             </b-list-group-item>
           </b-list-group>
           <br>       
@@ -78,6 +81,7 @@ export default {
       try {
         const res = await axios.get(`/api/${this.templateType}s/`)
         this.templates = res.data
+        this.templates.sort((a, b) => (a.name > b.name) ? 1 : -1)
         this.isLoading = false
       } catch (err) {
         const errInfo = errorHandler(err)
@@ -96,6 +100,7 @@ export default {
         try {
           await axios.delete(`/api/${this.templateType}s/${template._id}`)
           this.templates = this.templates.filter(t => t._id !== template._id)
+          this.templates.sort((a, b) => (a.name > b.name) ? 1 : -1)
           this.postStatus = { text: `${template.name} successfully deleted`, context: 'success' }
           this.isLoading = false
         } catch (err) {
@@ -109,6 +114,61 @@ export default {
         }
       } else {
         return 
+      }
+    },
+
+    //helper for copyTemplate method
+    getHeaderCellsWithoutIds(cells) {
+      cells.forEach((cell, index, cells) => { 
+        delete cells[index]._id
+      })
+      return cells
+    },
+
+    //helper for copyTemplate method
+    getDataRowsWithoutIds(rows) {
+      rows.forEach((row, index, rows) => {
+        row.dataCells.forEach((cell, index, cells) => {
+          cell.cellSects.forEach((sect, index, sects) => {
+            delete sects[index]._id
+          })
+          delete cells[index]._id
+        })
+        delete rows[index]._id
+      })
+      return rows
+    },
+
+    async copyTemplate(template) {
+      let newTemplate
+      let newTemplateName = template.name + '-COPY'
+      this.isLoading = true
+      try {
+        if (template.cells) {
+          let res = await axios.post('/api/headers/', { name: newTemplateName, cells: this.getHeaderCellsWithoutIds(template.cells) })
+          newTemplate = res.data
+        } else {
+          let newTemplateIdPhrase = template.idPhrase + '-COPY'
+          let res = await axios.post('/api/docs/', { 
+            name: newTemplateName, 
+            idPhrase: newTemplateIdPhrase, 
+            header: this.getHeaderCellsWithoutIds(template.header), 
+            dataRows: this.getDataRowsWithoutIds(template.dataRows) 
+          })
+          newTemplate = res.data
+        }
+        this.templates.push(newTemplate)
+        this.templates.sort((a, b) => (a.name > b.name) ? 1 : -1)
+        this.postStatus = { text: `${newTemplate.name} created`, context: 'success' }
+        this.isLoading = false
+      } catch (err) {
+        const errInfo = errorHandler(err)
+        if (errInfo.status === 401) {
+          this.$router.push({ name: 'Login', params: { msg: { text: errInfo.message, context: 'danger' }}})
+        } else {
+          this.postStatus = { text: errInfo.message, context: 'danger' };
+          this.isLoading = false
+        }
       }
     }
   },
