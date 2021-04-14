@@ -26,10 +26,10 @@ module.exports = {
 
   postDoc: async (req, res, next) => {  
     const userID = req.user._id
-    const { name, idPhrase, header, dataRows } = req.body
+    const { name, idPhrase, idPhrase2, header, dataRows } = req.body
     try {
       const postService = new PostService(Doc)
-      const doc = await postService.post({ name, idPhrase, header, dataRows, user: { id: userID }}) 
+      const doc = await postService.post({ name, idPhrase, idPhrase2, header, dataRows, user: { id: userID }}) 
       return res.json(doc)
     } catch (err) { 
       return next(err)
@@ -39,10 +39,10 @@ module.exports = {
 
   editDoc: async (req, res, next) => {  
     const doc = req.doc
-    const { name, idPhrase, header, dataRows } = req.body
+    const { name, idPhrase, idPhrase2, header, dataRows } = req.body
     try {
       const postService = new PostService(Doc)
-      const updatedDoc = await postService.update(doc, { name, idPhrase, header, dataRows })
+      const updatedDoc = await postService.update(doc, { name, idPhrase, idPhrase2, header, dataRows })
       return res.json(updatedDoc)
     } catch (err) { 
       return next(err)

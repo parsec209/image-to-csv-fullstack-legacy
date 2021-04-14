@@ -60,7 +60,9 @@ class CSVGenerator {
         let page = docText.extraction[i]
         for (let i = 0; i < recurringDocs.length; i++) {
           let recurringDoc = recurringDocs[i]
-          if (page.fullTextAnnotation && page.fullTextAnnotation.text.includes(recurringDoc.idPhrase)) {
+          if (page.fullTextAnnotation && 
+            page.fullTextAnnotation.text.includes(recurringDoc.idPhrase) &&
+            (recurringDoc.idPhrase2 ? page.fullTextAnnotation.text.includes(recurringDoc.idPhrase2) : true)) {
             matchedRecurringDocs.push({ fileName: docText.fileName, recurringDoc })
             matchedDocsText.push(docText.fileName)
             return

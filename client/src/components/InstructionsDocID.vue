@@ -3,6 +3,8 @@
     <p>
       The <strong>ID phrase</strong> is a line of text that the application looks for within a document immediately after the document is uploaded. This is how the upload 
       is identified as one of your saved recurring documents. From there, it will then know which recurring doc rules to follow for the rest of the CSV generation process.
+      Including at least one ID phrase is required, but you can optionally include a second ID phrase to narrow down the doc identification process even further. Note that
+      if you do include this second phrase, the application must find BOTH phrases within the extracted document text in order for the upload to be identified as a recurring doc. 
       <br>
       <br>
       The ID phrase you use must be a single line of text in the document consisting of characters (letters, numbers, symbols) no more than one space apart from each other, 

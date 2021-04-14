@@ -64,6 +64,10 @@ const docSchema = new mongoose.Schema({
     maxlength: 100,
     unique: true
   },
+  idPhrase2: {
+    type: String,
+    maxlength: 100
+  },
   header: {
     type: [headerCellSchema],
     required: true,

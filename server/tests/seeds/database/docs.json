@@ -2,6 +2,7 @@
   {
     "name": "GIF.GIF",
     "idPhrase": "564",
+    "idPhrase2": "Service Fee",
     "header": [
       { "value" : "Date" },
       { "value" : "Description" }
@@ -217,7 +218,23 @@
         ]}
       ]}
     ]
-  } 
+  },
+  
+  {
+    "name": "TIFF.tiff",
+    "idPhrase": "Tagged Image File Format",
+    "idPhrase2": "Nonexistant phrase",
+    "header": [
+      { "value" : "h1" }
+    ],
+    "dataRows": [
+      { "dataCells": [ 
+        { "cellSects": [
+          {}
+        ]}
+      ]}
+    ]
+  }
   
 ]
 

@@ -27,7 +27,7 @@ module.exports = {
 
   password:
     body('password')
-    .isString()
+      .isString()
       .withMessage('Missing string in request body: password'),
 
 
@@ -107,6 +107,11 @@ module.exports = {
       .isString()
       .trim()
       .withMessage('Missing string in request body: idPhrase'),
+
+
+  idPhrase2:
+    body('idPhrase2')
+      .trim(),
        
 
   header:    

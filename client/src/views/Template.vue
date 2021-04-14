@@ -46,8 +46,18 @@
                 </b-popover>
                 <b-form-invalid-feedback id="idPhrase-live-feedback">ID phrase required</b-form-invalid-feedback>
               </b-form-group>
+              <b-form-group v-if="templateType === 'doc'" label="Second ID Phrase (Optional):" label-for="idPhrase2-input">
+                <b-form-input       
+                  id="idPhrase2-input"
+                  placeholder="Enter second ID phrase" 
+                  v-model="$v.form.idPhrase2.$model" 
+                  aria-describedby="idPhrase2-live-feedback"
+                >
+                </b-form-input>
+              </b-form-group>
             </b-col>
           </b-row>
+          <br>
           <div class="text-center" v-if="templateType === 'doc'">
             <b-dropdown id="dropdown-headers" text="Use saved header" class="m-md-2" variant="info">
               <b-dropdown-item v-for="header in headers" :key="header.name" @click="setHeader(header)">{{ header.name }}</b-dropdown-item>
@@ -336,6 +346,7 @@ export default {
       form: {
         name: '',
         idPhrase: '',
+        idPhrase2: '',
         headerCells: [],
         dataRows: [],
       },
@@ -355,6 +366,7 @@ export default {
       idPhrase: {
         required: requiredIf(isDocTemplate) 
       },
+      idPhrase2: {},
       headerCells: {
         $each: {
           value: {
@@ -692,6 +704,7 @@ export default {
         this.form.headerCells = res.data.cells
       } else {
         this.form.idPhrase = res.data.idPhrase
+        this.form.idPhrase2 = res.data.idPhrase2
         this.form.headerCells = res.data.header
         this.form.dataRows = this.defineAllCellSectValues(res.data.dataRows)
       }
@@ -710,7 +723,13 @@ export default {
         await axios.post('/api/headers/', { name: this.form.name, cells: this.form.headerCells })
       } else {
         this.removeFalsyValuesFromDataRows()
-        await axios.post('/api/docs/', { name: this.form.name, idPhrase: this.form.idPhrase, header: this.form.headerCells, dataRows: this.form.dataRows })         
+        await axios.post('/api/docs/', { 
+          name: this.form.name, 
+          idPhrase: this.form.idPhrase, 
+          idPhrase2: this.form.idPhrase2, 
+          header: this.form.headerCells, 
+          dataRows: this.form.dataRows 
+          })         
       }
       this.$router.push({ name: 'Index', params: { templateType: this.templateType, msg: { text: `${this.form.name} successfully added`, context: 'success' }}})
     },
@@ -720,7 +739,12 @@ export default {
         await axios.put(`/api/headers/${id}`, { name: this.form.name, cells: this.form.headerCells })
       } else {
         this.removeFalsyValuesFromDataRows()
-        await axios.put(`/api/docs/${id}`, { name: this.form.name, idPhrase: this.form.idPhrase, header: this.form.headerCells, dataRows: this.form.dataRows })         
+        await axios.put(`/api/docs/${id}`, { 
+          name: this.form.name, 
+          idPhrase: this.form.idPhrase, 
+          idPhrase2: this.form.idPhrase2, 
+          header: this.form.headerCells, 
+          dataRows: this.form.dataRows })         
       }
       this.$router.push({ name: 'Index', params: { templateType: this.templateType, msg: { text: `${this.form.name} successfully updated`, context: 'success' }}})
     },
@@ -748,6 +772,7 @@ export default {
     async getPageData() {
       this.form.name = ''
       this.form.idPhrase = ''
+      this.form.idPhrase2 = ''
       this.form.dataRows = []
       try {
         if (this.id) {
