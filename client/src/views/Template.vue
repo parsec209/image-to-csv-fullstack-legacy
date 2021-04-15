@@ -590,12 +590,14 @@ export default {
     },
 
     copyLastRow() {
-      const dataCellsToCopy = this.form.dataRows[this.form.dataRows.length - 1].dataCells
-      const newRow = { dataCells: dataCellsToCopy.slice() }
+      const rowToCopy = this.form.dataRows[this.form.dataRows.length - 1]
+      const newRow = JSON.parse(JSON.stringify(rowToCopy))
+      delete newRow._id
       newRow.dataCells.forEach(dataCell => {
         dataCell.cellSects.forEach(cellSect => {
           delete cellSect['_id']
         });
+        delete dataCell['_id']
       })
       this.form.dataRows.push(newRow)
     },
