@@ -3,7 +3,8 @@
     <p>
       The <strong>top anchor phrase</strong> option works by having the application scan the upload's text for the anchor phrase that you enter into the 
       <i>Search phrase or literal value</i> field (make sure this phrase strictly adheres to the application's definition of a <i>phrase</i>, see note below about 
-      phrases). If the anchor phrase is found during the scan, it will then look for the first phrase in the document text that is located directly beneath the anchor phrase. 
+      phrases). The anchor phrase can either be a subset of a larger phrase, or be a complete phrase by itself. If the anchor phrase is found during the scan, 
+      it will then look for the first phrase in the document text that is located directly beneath the anchor phrase. 
       <i>Directly beneath</i> here means that at some point, these two phrases share the same horizontal (x) coordinate. If such a phrase is found, 
       it will be extracted as the cell section value. 
       <br>
@@ -11,7 +12,7 @@
       <i>Important note: the word <strong>phrase</strong>, in the context of this application, means a single line of text consisting of characters 
       (letters, numbers, symbols) no more than one space apart from each other. A phrase ends when a character is proceeded by two or more spaces, a line break, or a page 
       break. What the application counts as single space between text in an image file is not an exact science; however, you and the application 
-      will usually be in agreement.</i> 
+      will usually be in agreement. Just remember, type a phrase into the form exactly as it appears in the document!</i> 
     </p>
     <div>
       <p><strong>Example:</strong></p>

@@ -52,17 +52,17 @@ afterAll(async () => {
 })
 
 
-// describe('instantiating CSVGenerator', () => {
-//   test('initializes constructor', async () => {
-//     const user = await getUser()
-//     const csvGenerator = new CSVGenerator(user, uuidv4(), uuidv4(), [1], '2020/01/20')
-//     expect(csvGenerator.user).toBeTruthy()
-//     expect(csvGenerator.IPAddress).toBeTruthy()
-//     expect(csvGenerator.fileBatchID).toBeTruthy()
-//     expect(csvGenerator.pageSelections).toBeTruthy()
-//     expect(csvGenerator.dateToday).toBeTruthy()
-//   })
-// })
+describe('instantiating CSVGenerator', () => {
+  test('initializes constructor', async () => {
+    const user = await getUser()
+    const csvGenerator = new CSVGenerator(user, uuidv4(), uuidv4(), [1], '2020/01/20')
+    expect(csvGenerator.user).toBeTruthy()
+    expect(csvGenerator.IPAddress).toBeTruthy()
+    expect(csvGenerator.fileBatchID).toBeTruthy()
+    expect(csvGenerator.pageSelections).toBeTruthy()
+    expect(csvGenerator.dateToday).toBeTruthy()
+  })
+})
 
 
 describe('identifying doc text using recurringDoc ID phrase', () => {
@@ -112,104 +112,104 @@ describe('identifying doc text using recurringDoc ID phrase', () => {
 })
  
 
-// describe('generating data from uploads, starting with text extraction and ending with written CSV files', () => {
+describe('generating data from uploads, starting with text extraction and ending with written CSV files', () => {
 
-//   const filesAreInCloud = (files, fileBatchID, userID) => {
-//     return Promise.all(files.map(async (file, index) => {
-//       const cloudFile = bucket.file(`${userID}/downloads/${fileBatchID}/${index}.csv`)
-//       const exists = await cloudFile.exists()
-//       return exists[0] 
-//     }))
-//     .then(result => {
-//       return (result.includes(false) ? false : true)
-//     })
-//   }
+  const filesAreInCloud = (files, fileBatchID, userID) => {
+    return Promise.all(files.map(async (file, index) => {
+      const cloudFile = bucket.file(`${userID}/downloads/${fileBatchID}/${index}.csv`)
+      const exists = await cloudFile.exists()
+      return exists[0] 
+    }))
+    .then(result => {
+      return (result.includes(false) ? false : true)
+    })
+  }
 
-//   afterEach(async () => {
-//     await dbConnection.dropCollection('docs')
-//   })
+  afterEach(async () => {
+    await dbConnection.dropCollection('docs')
+  })
 
-//   test('returns expected status when one doc\'s text does not match any recurringDoc and another doc contains no text', async () => {
-//     const user = await getUser()
-//     const userID = user._id
-//     await getRecurringDocs(userID)
-//     const fileBatchID = uuidv4()
-//     const options1 = {
-//       destination: `${userID}/uploads/${fileBatchID}/blankFile.tiff`,
-//       metadata: {
-//         contentType: 'image/tiff'
-//       }
-//     }
-//     const options2 = {
-//       destination: `${userID}/uploads/${fileBatchID}/TIF.tif`,
-//       metadata: {
-//         contentType: 'image/tiff'
-//       }
-//     }
-//     await bucket.upload(__dirname + '/seeds/uploads/cloud/validExts/blankFile.tiff', options1)
-//     await bucket.upload(__dirname + '/seeds/uploads/cloud/validExts/TIF.tif', options2)
-//     const csvGenerator = new CSVGenerator(user, uuidv4(), fileBatchID, [1], '2020/01/20')
-//     const successStatus = await csvGenerator.compileData()
-//     const expected = {
-//       identifiedDocs: [],
-//       unidentifiedDocs: ['blankFile.tiff', 'TIF.tif']
-//     }
-//     expect(JSON.stringify(successStatus.identifiedDocs.sort())).toBe(JSON.stringify(expected.identifiedDocs.sort()))
-//     expect(JSON.stringify(successStatus.unidentifiedDocs.sort())).toBe(JSON.stringify(expected.unidentifiedDocs.sort()))
-//     await expect(filesAreInCloud([0], fileBatchID, userID)).resolves.toBe(false)
-//   })
-//   test('returns expected status when there are uploads that match existing recurringDocs and others that do not', async () => {
-//     const user = await getUser()
-//     const userID = user._id
-//     await getRecurringDocs(userID)
-//     const fileBatchID = uuidv4()
-//     const options1 = {
-//       destination: `${userID}/uploads/${fileBatchID}/PDF_editable.pdf`,
-//       metadata: {
-//         contentType: 'application/pdf'
-//       }
-//     }
-//     const options2 = {
-//       destination: `${userID}/uploads/${fileBatchID}/TIFF.tiff`,
-//       metadata: {
-//         contentType: 'image/tiff'
-//       }
-//     }
-//     const options3 = {
-//       destination: `${userID}/uploads/${fileBatchID}/GIF.GIF`,
-//       metadata: {
-//         contentType: 'image/gif'
-//       }
-//     }
-//     await bucket.upload(__dirname + '/seeds/uploads/cloud/validExts/PDF_editable.pdf', options1)
-//     await bucket.upload(__dirname + '/seeds/uploads/cloud/validExts/TIFF.tiff', options2)
-//     await bucket.upload(__dirname + '/seeds/uploads/cloud/validExts/GIF.GIF', options3)
-//     const csvGenerator = new CSVGenerator(user, uuidv4(), fileBatchID, [1, 2, 3], '2020/01/20')
-//     const successStatus = await csvGenerator.compileData()
-//     const expected = {
-//       identifiedDocs: ['PDF_editable.pdf', 'GIF.GIF'],
-//       unidentifiedDocs: ['TIFF.tiff']
-//     }
-//     expect(JSON.stringify(successStatus.identifiedDocs.sort())).toBe(JSON.stringify(expected.identifiedDocs.sort()))
-//     expect(JSON.stringify(successStatus.unidentifiedDocs.sort())).toBe(JSON.stringify(expected.unidentifiedDocs.sort()))
-//     await expect(filesAreInCloud([0, 1], fileBatchID, userID)).resolves.toBe(true)
-//   })
-//   test('returns expected status when incorrect fileBatchID is supplied (no doc text will be retrieved)', async () => {
-//     const user = await getUser()
-//     const userID = user._id
-//     await getRecurringDocs(userID)
-//     const fileBatchID = 'wrongBatchID'
-//     const csvGenerator = new CSVGenerator(user, uuidv4(), fileBatchID, [1, 2, 3], '2020/01/20')
-//     const successStatus = await csvGenerator.compileData()
-//     const expected = {
-//       identifiedDocs: [],
-//       unidentifiedDocs: []
-//     }
-//     expect(JSON.stringify(successStatus.identifiedDocs.sort())).toBe(JSON.stringify(expected.identifiedDocs.sort()))
-//     expect(JSON.stringify(successStatus.unidentifiedDocs.sort())).toBe(JSON.stringify(expected.unidentifiedDocs.sort()))
-//     await expect(filesAreInCloud([0], fileBatchID, userID)).resolves.toBe(false)
-//   })
-// })
+  test('returns expected status when one doc\'s text does not match any recurringDoc and another doc contains no text', async () => {
+    const user = await getUser()
+    const userID = user._id
+    await getRecurringDocs(userID)
+    const fileBatchID = uuidv4()
+    const options1 = {
+      destination: `${userID}/uploads/${fileBatchID}/blankFile.tiff`,
+      metadata: {
+        contentType: 'image/tiff'
+      }
+    }
+    const options2 = {
+      destination: `${userID}/uploads/${fileBatchID}/TIF.tif`,
+      metadata: {
+        contentType: 'image/tiff'
+      }
+    }
+    await bucket.upload(__dirname + '/seeds/uploads/cloud/validExts/blankFile.tiff', options1)
+    await bucket.upload(__dirname + '/seeds/uploads/cloud/validExts/TIF.tif', options2)
+    const csvGenerator = new CSVGenerator(user, uuidv4(), fileBatchID, [1], '2020/01/20')
+    const successStatus = await csvGenerator.compileData()
+    const expected = {
+      identifiedDocs: [],
+      unidentifiedDocs: ['blankFile.tiff', 'TIF.tif']
+    }
+    expect(JSON.stringify(successStatus.identifiedDocs.sort())).toBe(JSON.stringify(expected.identifiedDocs.sort()))
+    expect(JSON.stringify(successStatus.unidentifiedDocs.sort())).toBe(JSON.stringify(expected.unidentifiedDocs.sort()))
+    await expect(filesAreInCloud([0], fileBatchID, userID)).resolves.toBe(false)
+  })
+  test('returns expected status when there are uploads that match existing recurringDocs and others that do not', async () => {
+    const user = await getUser()
+    const userID = user._id
+    await getRecurringDocs(userID)
+    const fileBatchID = uuidv4()
+    const options1 = {
+      destination: `${userID}/uploads/${fileBatchID}/PDF_editable.pdf`,
+      metadata: {
+        contentType: 'application/pdf'
+      }
+    }
+    const options2 = {
+      destination: `${userID}/uploads/${fileBatchID}/TIFF.tiff`,
+      metadata: {
+        contentType: 'image/tiff'
+      }
+    }
+    const options3 = {
+      destination: `${userID}/uploads/${fileBatchID}/GIF.GIF`,
+      metadata: {
+        contentType: 'image/gif'
+      }
+    }
+    await bucket.upload(__dirname + '/seeds/uploads/cloud/validExts/PDF_editable.pdf', options1)
+    await bucket.upload(__dirname + '/seeds/uploads/cloud/validExts/TIFF.tiff', options2)
+    await bucket.upload(__dirname + '/seeds/uploads/cloud/validExts/GIF.GIF', options3)
+    const csvGenerator = new CSVGenerator(user, uuidv4(), fileBatchID, [1, 2, 3], '2020/01/20')
+    const successStatus = await csvGenerator.compileData()
+    const expected = {
+      identifiedDocs: ['PDF_editable.pdf', 'GIF.GIF'],
+      unidentifiedDocs: ['TIFF.tiff']
+    }
+    expect(JSON.stringify(successStatus.identifiedDocs.sort())).toBe(JSON.stringify(expected.identifiedDocs.sort()))
+    expect(JSON.stringify(successStatus.unidentifiedDocs.sort())).toBe(JSON.stringify(expected.unidentifiedDocs.sort()))
+    await expect(filesAreInCloud([0, 1], fileBatchID, userID)).resolves.toBe(true)
+  })
+  test('returns expected status when incorrect fileBatchID is supplied (no doc text will be retrieved)', async () => {
+    const user = await getUser()
+    const userID = user._id
+    await getRecurringDocs(userID)
+    const fileBatchID = 'wrongBatchID'
+    const csvGenerator = new CSVGenerator(user, uuidv4(), fileBatchID, [1, 2, 3], '2020/01/20')
+    const successStatus = await csvGenerator.compileData()
+    const expected = {
+      identifiedDocs: [],
+      unidentifiedDocs: []
+    }
+    expect(JSON.stringify(successStatus.identifiedDocs.sort())).toBe(JSON.stringify(expected.identifiedDocs.sort()))
+    expect(JSON.stringify(successStatus.unidentifiedDocs.sort())).toBe(JSON.stringify(expected.unidentifiedDocs.sort()))
+    await expect(filesAreInCloud([0], fileBatchID, userID)).resolves.toBe(false)
+  })
+})
 
 
 

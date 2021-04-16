@@ -7,10 +7,11 @@
       if you do include this second phrase, the application must find BOTH phrases within the extracted document text in order for the upload to be identified as a recurring doc. 
       <br>
       <br>
-      The ID phrase you use must be a single line of text in the document consisting of characters (letters, numbers, symbols) no more than one space apart from each other, 
-      and must be typed into the form field exactly as such. A phrase ends the moment a character is followed by two or more spaces, or a line/page break. The phrase can come 
-      from any page of the document that you select to scan. <i>Note that what counts as single space between text in an image file is not an exact science; however, you and the
-      application will usually be in agreement.</i>
+      The ID phrase you use must be a single line of text found in the document consisting of characters (letters, numbers, symbols) no more than one space apart from each other.
+      A phrase ends the moment it is followed by two or more spaces, or a line/page break. <i>Note that what counts as a single space between text in an image file is not 
+      an exact science; however, you and the application will usually be in agreement. If it looks like a phrase, per the rules just mentioned, it's probably a phrase. 
+      And make sure to type the phrase into the form exactly as it appears in the document!</i> The phrase can come from any page of the document you decide to scan, 
+      and it can even be a subset of a larger phrase (i.e. you see a phrase "Good afternoon!" in the document and decide to use "ood afternoo" as your ID phrase).  
     </p>
     <div>
       <p><strong>Example:</strong></p>
