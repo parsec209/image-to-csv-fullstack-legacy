@@ -233,6 +233,7 @@ class CellValueGenerator {
     if (recurringDocCellSect.appendChars) {
       cellSectValue += recurringDocCellSect.appendChars 
     }
+    cellSectValue.trimStart()
     return cellSectValue
   }
 
