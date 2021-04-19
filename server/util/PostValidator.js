@@ -47,7 +47,14 @@ module.exports = {
 
 
   //cellSect validators
-  
+
+  phraseCountIsInteger: {
+    validator: function(v) {
+      return Number.isInteger(v)
+    },
+    message: 'PhraseCount must be an integer'
+  },
+
   searchOrInputMethodIsNotToday: {
     validator: function(v) {  
       if (this.searchOrInputMethod === 'today') {

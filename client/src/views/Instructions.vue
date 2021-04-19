@@ -16,8 +16,8 @@
           position to the metadata values in each subsequent document. A text pattern is found within the metadata value itself (i.e. you know the value will be a ten digit number 
           in each subsequent document). When you receive a set of documents regularly that contain such 
           constants, it can be setup as a <strong>recurring document</strong>. A recurring doc is a set of rules you configure that tells the 
-          application what text constants to look for in order to extract your desired metadata values. A recurring doc also specifies where and how you want the 
-          extracted metadata and field names to appear in the generated CSV file.
+          application what text constants to look for in order to find and extract your desired metadata values. A recurring doc also specifies where and how you want the 
+          field names and values to appear in the generated CSV file.
           <br>
           <br>
           You can add, edit, and delete recurring documents in the <b-link to="/index/doc">My recurring documents</b-link> page. This will be the starting point if this is your
@@ -103,6 +103,8 @@
             <br>
             <InstructionsPhraseOrValue/> 
             <br>        
+            <InstructionsAddPhraseCount/> 
+            <br>        
             <InstructionsAppendChars/> 
             <br>
             <InstructionsFormatDate/> 
@@ -137,6 +139,7 @@ import InstructionsCustomValue from '../components/InstructionsCustomValue.vue'
 import InstructionsTodayDate from '../components/InstructionsTodayDate.vue'
 import InstructionsEmptySect from '../components/InstructionsEmptySect.vue'
 import InstructionsPhraseOrValue from '../components/InstructionsPhraseOrValue.vue'
+import InstructionsAddPhraseCount from '../components/InstructionsAddPhraseCount.vue'
 import InstructionsAppendChars from '../components/InstructionsAppendChars.vue'
 import InstructionsFormatDate from '../components/InstructionsFormatDate.vue'
 import InstructionsAddDays from '../components/InstructionsAddDays.vue'
@@ -158,6 +161,7 @@ export default {
     InstructionsTodayDate,
     InstructionsEmptySect,
     InstructionsPhraseOrValue,
+    InstructionsAddPhraseCount,
     InstructionsAppendChars,
     InstructionsFormatDate,
     InstructionsAddDays,

@@ -129,59 +129,8 @@ class CellValueGenerator {
       return false
     }
   }
-
-
-  /**
-   * Use left anchor phrase to find CSV cell section value
-   * @param {PageLines} page - Page lines
-   * @param {number} pageIndex - Index of {@link DocLines}.textLines, representing a page number 
-   * @param {number} phraseOrValueEndIndex - Index of {@link LineText} where phraseOrValue ends
-   * @returns {string} - CSV cell section value
-   */
-  getCellSectValueFromLeftPhrase(page, pageIndex, phraseOrValueEndIndex) {
-    validateArgs(['{fullTextAnnotation: Maybe Object, ...}', 'Number', 'Number'], arguments)
-    let cellSectValue = ''
-    const line = page[pageIndex]
-    //if the current line containing the phraseOrValue has additional text after the phraseOrValue, that additional text will be the cell section value
-    if (line.text.length - 1 > phraseOrValueEndIndex) {
-      cellSectValue = line.text.substring(phraseOrValueEndIndex + 1)
-    //if current line does not have any text after the phraseOrValue (meaning there is a line break right after the phraseOrValue), the next line's text will be the cellSectValue
-    } else {  
-      const nextLine = page[pageIndex + 1]
-      const currentLineVerticalMidPoint = this.getLineVerticalMidPoint(line.vertices.yLowerRight, line.vertices.yUpperLeft)
-      if (this.linesAreOnSameHorizontalPlane(currentLineVerticalMidPoint, nextLine.vertices.yLowerRight, nextLine.vertices.yUpperLeft)) {
-        cellSectValue = nextLine.text
-      }
-    }
-    return cellSectValue
-  }
-
-
-  /**
-   * Use top anchor phrase to find CSV cell section value
-   * @param {PageLines} page - Page lines
-   * @param {number} pageIndex - Index of {@link DocLines}.textLines, representing a page number 
-   * @param {number} phraseOrValueStartIndex - Index of {@link LineText} where phraseOrValue starts
-   * @param {number} phraseOrValueEndIndex - Index of {@link LineText} where phraseOrValue ends
-   * @returns {string} - CSV cell section value
-   */
-  getCellSectValueFromTopPhrase(page, pageIndex, phraseOrValueStartIndex, phraseOrValueEndIndex) {
-    validateArgs(['{fullTextAnnotation: Maybe Object, ...}', 'Number', 'Number', 'Number'], arguments)
-    let cellSectValue = ''
-    const phraseOrValueVertices = this.getPhraseOrValueVertices(phraseOrValueStartIndex, phraseOrValueEndIndex, page[pageIndex])
-    for (let i = pageIndex + 1; i < page.length; i++) {
-      let line = page[i]
-      let phraseOrValueVerticalMidPoint = this.getLineVerticalMidPoint(phraseOrValueVertices.yLowerRight, phraseOrValueVertices.yUpperLeft)
-      //looks for the first line below phraseOrValue that shares an x coordinate with phraseOrValue; if found, that line's text will be the cell section value
-      if (line.vertices.xLowerRight > phraseOrValueVertices.xUpperLeft && line.vertices.xUpperLeft < phraseOrValueVertices.xLowerRight && !this.linesAreOnSameHorizontalPlane(phraseOrValueVerticalMidPoint, line.vertices.yLowerRight, line.vertices.yUpperLeft)) {
-        cellSectValue = line.text
-        return cellSectValue
-      }
-    }
-    return cellSectValue
-  }
-
-
+  
+  
   /**
    * Gets CSV cell section value using anchor phrases
    * @param {Object} recurringDocCellSect - Recurring doc cell section 
@@ -189,24 +138,58 @@ class CellValueGenerator {
    */
   getCellSectValueFromPosition(recurringDocCellSect) {
     validateArgs(['{searchOrInputMethod: Maybe String, ...}'], arguments)
-    for (let i = 0; i < this.docTextLines.textLines.length; i++) {
-      let page = this.docTextLines.textLines[i]
-      for (let i = 0; i < page.length; i++) {
-        let line = page[i]
-        let phraseOrValueStartIndex = line.text.indexOf(recurringDocCellSect.phraseOrValue)
-        //if phraseOrValue found in line text
-        if (phraseOrValueStartIndex !== -1) {
-          let phraseOrValueEndIndex = phraseOrValueStartIndex + recurringDocCellSect.phraseOrValue.length - 1
-          //now that the position of the phraseOrValue (anchor phrase) is known, we can parse for the cell section value
-          if (recurringDocCellSect.searchOrInputMethod === 'leftPhrase') {
-            return this.getCellSectValueFromLeftPhrase(page, i, phraseOrValueEndIndex)
-          } else if (recurringDocCellSect.searchOrInputMethod === 'topPhrase') {
-            return this.getCellSectValueFromTopPhrase(page, i, phraseOrValueStartIndex, phraseOrValueEndIndex)
+    let cellSectValue
+    let anchorPhraseFound = false
+    let phraseCount = 0
+    let anchorPhraseStartIndex
+    let anchorPhraseEndIndex
+    let anchorPhraseVertices
+    let anchorPhraseVerticalMidPoint
+    let anchorPhrasePage
+    for (let pageIndex = 0; pageIndex < this.docTextLines.textLines.length; pageIndex++) {
+      let page = this.docTextLines.textLines[pageIndex]
+      for (let lineIndex = 0; lineIndex < page.length; lineIndex++) {
+        let line = page[lineIndex]
+        if (!anchorPhraseFound) {
+          anchorPhraseStartIndex = line.text.indexOf(recurringDocCellSect.phraseOrValue)
+          if (anchorPhraseStartIndex !== -1) {
+            anchorPhraseFound = true
+            anchorPhraseEndIndex = anchorPhraseStartIndex + recurringDocCellSect.phraseOrValue.length - 1
+            anchorPhraseVertices = this.getPhraseOrValueVertices(anchorPhraseStartIndex, anchorPhraseEndIndex, line)
+            anchorPhraseVerticalMidPoint = this.getLineVerticalMidPoint(anchorPhraseVertices.yLowerRight, anchorPhraseVertices.yUpperLeft)
+            anchorPhrasePage = pageIndex
+            //if additional text proceeds a left anchor phrase within the same line, that additional text will be used as the first phrase in the count
+            //otherwise, the next line's text will be used as the first phrase in the count
+            if (recurringDocCellSect.searchOrInputMethod === 'leftPhrase' && line.text.length - 1 > anchorPhraseEndIndex) {
+              cellSectValue = line.text.substring(anchorPhraseEndIndex + 1)
+              phraseCount++
+            }
           }
+        } else {
+          if (recurringDocCellSect.searchOrInputMethod === 'leftPhrase') {  
+            cellSectValue = line.text
+            phraseCount++
+          } else if (recurringDocCellSect.searchOrInputMethod === 'topPhrase') {
+            //do not continue searching for target phrase on different page
+            if (anchorPhrasePage === pageIndex) {
+              //anchor phrase must have an overlapping x-coord with the current line, and they cannot be on the same horizontal plane
+              if (line.vertices.xLowerRight > anchorPhraseVertices.xUpperLeft && line.vertices.xUpperLeft < anchorPhraseVertices.xLowerRight && !this.linesAreOnSameHorizontalPlane(anchorPhraseVerticalMidPoint, line.vertices.yLowerRight, line.vertices.yUpperLeft)) {
+                cellSectValue = line.text
+                phraseCount++
+              }
+            } else {
+              cellSectValue = ''
+              return cellSectValue
+            }
+          }
+        }
+        if (phraseCount === recurringDocCellSect.phraseCount) {
+          return cellSectValue
         }
       }
     }
-    return ''
+    cellSectValue = ''
+    return cellSectValue
   }
 
 

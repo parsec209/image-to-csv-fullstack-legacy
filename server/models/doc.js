@@ -8,6 +8,13 @@ const cellSectSchema = new mongoose.Schema({
     type: String,
     enum: ['topPhrase', 'leftPhrase', 'pattern', 'customValue', 'today']
   }, 
+  phraseCount: {
+    type: Number,
+    min: 1,
+    max: 99, 
+    default: 1,
+    validate: [util.phraseCountIsInteger]   
+  },
   phraseOrValue: {
     type: String,
     max: 100,    

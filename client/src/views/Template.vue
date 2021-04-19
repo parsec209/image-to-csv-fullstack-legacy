@@ -212,6 +212,29 @@
                         <b-form-invalid-feedback id="phraseOrValue-live-feedback">Please enter phrase or value</b-form-invalid-feedback>
                       </b-form-group>
                       <br>
+                      <div>
+                        <label for="sb-inline-phraseCount">
+                          (Optional)<strong> Add phrase count (1-99) </strong>
+                          <b-badge variant="secondary" href="#" id="addPhraseCount-tip">
+                            <b-icon icon="question-circle-fill" aria-label="addPhraseCount-tip"></b-icon>
+                          </b-badge>
+                          <b-popover target="addPhraseCount-tip" triggers="hover focus">
+                            <InstructionsAddPhraseCount/>
+                          </b-popover>
+                        </label>
+                        <br>
+                        <b-form-spinbutton 
+                          id="sb-inline-phraseCount" 
+                          min="1" 
+                          max="99" 
+                          step="1" 
+                          v-model="cellSect.phraseCount.$model" 
+                          inline
+                          :disabled="!cellSect.searchOrInputMethod.$model"
+                        >
+                        </b-form-spinbutton>
+                      </div>
+                      <br>
                       <label for="appendChars-input">
                         (Optional)<strong> Append characters </strong>
                         <b-badge variant="secondary" href="#" id="appendChars-tip">
@@ -256,7 +279,7 @@
                       </b-form-group>
                       <br>
                       <div>
-                        <label for="sb-inline">
+                        <label for="sb-inline-daysAdded">
                           (Optional)<strong> Add days to date (0-99) </strong>
                           <b-badge variant="secondary" href="#" id="addDays-tip">
                             <b-icon icon="question-circle-fill" aria-label="addDays-tip"></b-icon>
@@ -267,7 +290,7 @@
                         </label>
                         <br>
                         <b-form-spinbutton 
-                          id="sb-inline" 
+                          id="sb-inline-daysAdded" 
                           min="0" 
                           max="99" 
                           step="1" 
@@ -308,6 +331,7 @@ import InstructionsCustomValue from '../components/InstructionsCustomValue.vue'
 import InstructionsTodayDate from '../components/InstructionsTodayDate.vue'
 import InstructionsEmptySect from '../components/InstructionsEmptySect.vue'
 import InstructionsPhraseOrValue from '../components/InstructionsPhraseOrValue.vue'
+import InstructionsAddPhraseCount from '../components/InstructionsAddPhraseCount.vue'
 import InstructionsAppendChars from '../components/InstructionsAppendChars.vue'
 import InstructionsFormatDate from '../components/InstructionsFormatDate.vue'
 import InstructionsAddDays from '../components/InstructionsAddDays.vue'
@@ -332,6 +356,7 @@ export default {
     InstructionsTodayDate,
     InstructionsEmptySect,
     InstructionsPhraseOrValue,
+    InstructionsAddPhraseCount,
     InstructionsAppendChars,
     InstructionsFormatDate,
     InstructionsAddDays
@@ -385,6 +410,7 @@ export default {
                   phraseOrValue: {
                     required: requiredIf(notEmptyValueOrToday)
                   },
+                  phraseCount: {},
                   appendChars: {},
                   dateFormat: {
                     areValidDateChars
@@ -498,6 +524,7 @@ export default {
       const emptySect = {
         searchOrInputMethod: '', 
         phraseOrValue: '',  
+        phraseCount: 1,  
         appendChars: '',
         dateFormat: '',
         daysAdded: 0
@@ -527,6 +554,7 @@ export default {
       const sect = this.$v.form.dataRows.$each.$iter[rowIndex].dataCells.$each.$iter[cellIndex].cellSects.$each.$iter[sectIndex]
       if (!sect.searchOrInputMethod.$model) {
         sect.phraseOrValue.$model = ''
+        sect.phraseCount.$model = 1
         sect.appendChars.$model = ''
         sect.dateFormat.$model = ''
         sect.daysAdded.$model = 0
@@ -649,6 +677,7 @@ export default {
       const emptySect = {
         searchOrInputMethod: '', 
         phraseOrValue: '',  
+        phraseCount: 1,  
         appendChars: '',
         dateFormat: '',
         daysAdded: 0

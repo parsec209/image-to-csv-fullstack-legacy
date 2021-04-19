@@ -72,6 +72,26 @@ describe('validating header posts', () => {
 
 
 describe('validating cellSect posts', () => {
+  test('rejects if "phraseCount" is not an integer', async () => {
+    const props = {
+      name: 'docName',
+      idPhrase: 'docPhrase',
+      header: [{ value: 'headercell' }],
+      dataRows: [
+        { dataCells: [ 
+          { cellSects: [
+            {
+              searchOrInputMethod: 'leftPhrase',
+              phraseOrValue: 'sectPhrase',
+              phraseCount: 2.5
+            }
+          ]}
+        ]}
+      ],
+      user: { id: userID }
+    }    
+    await expect(new PostService(Doc).post(props)).rejects.toThrow(new Error('Doc validation failed: dataRows.0.dataCells.0.cellSects.0.phraseCount: PhraseCount must be an integer'))
+  })
   test('rejects if there is no "phraseOrValue" when the "searchOrInputMethod" is one of the following: "topPhrase", "leftPhrase", "pattern", "customValue"', async () => {
     const props = {
       name: 'docName',

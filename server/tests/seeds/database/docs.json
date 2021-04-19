@@ -25,6 +25,7 @@
     ]
   },
 
+
   {
     "name": "PDF_editable.pdf",
     "idPhrase": "Expense Report",
@@ -72,6 +73,7 @@
     ]
   },
 
+
   {
     "name": "PDF_editable.pdf--cellValue_test",
     "idPhrase": "Your City, ST 12345",
@@ -83,11 +85,13 @@
       { "value" : "5" },
       { "value" : "6" },
       { "value" : "7" },
-      { "value" : "8" }
+      { "value" : "8" },
+      { "value" : "9" },
+      { "value" : "10" }
     ],
     "dataRows": [
       { "dataCells": [ 
-        { "cellSects": [
+        { "cellSects": [  
           {
             "searchOrInputMethod": "customValue",
             "phraseOrValue": "2014-08-02",
@@ -215,11 +219,58 @@
         ]},
         { "cellSects": [
           {}
+        ]},
+        { "cellSects": [
+          {
+            "searchOrInputMethod": "leftPhrase", 
+            "phraseCount": 9,
+            "phraseOrValue": "Payable" 
+          },
+          {
+            "searchOrInputMethod": "leftPhrase", 
+            "phraseCount": 19,
+            "phraseOrValue": "Unit" 
+          },
+          {
+            "searchOrInputMethod": "leftPhrase", 
+            "phraseCount": 7,
+            "phraseOrValue": "123 Your Street" 
+          },
+          {
+            "searchOrInputMethod": "leftPhrase", 
+            "phraseCount": 9,
+            "phraseOrValue": "Subtotal" 
+          }
+        ]},
+        { "cellSects": [
+
+          {
+            "searchOrInputMethod": "leftPhrase", 
+            "phraseCount": 20,
+            "phraseOrValue": "Category" 
+          },
+          
+          {
+            "searchOrInputMethod": "topPhrase", 
+            "phraseCount": 9,
+            "phraseOrValue": "Submitted" 
+          },
+          {
+            "searchOrInputMethod": "topPhrase", 
+            "phraseCount": 9,
+            "phraseOrValue": "01/01/2000" 
+          },
+          {
+            "searchOrInputMethod": "topPhrase", 
+            "phraseCount": 8,
+            "phraseOrValue": "Invoice #" 
+          }
         ]}
       ]}
     ]
   },
   
+
   {
     "name": "TIFF.tiff",
     "idPhrase": "Tagged Image File Format",
@@ -235,6 +286,5 @@
       ]}
     ]
   }
-  
 ]
 

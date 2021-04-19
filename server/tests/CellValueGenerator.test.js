@@ -166,6 +166,31 @@ describe('parsing doc text using anchor phrases', () => {
       //page 1 and 2 of pdf, page 2 showing "Notes" to the right of "Description"
       expect(textFound).toBe('Qty')
     })
+    test('gets desired text using multiple phrase counts, first phrase being part of same line as anchor phrase', () => {
+      const textFound = initCellValueGenerator().getCellSectValueFromPosition(recurringDocPDFCellValues.dataRows[0].dataCells[8].cellSects[0]) 
+      //page 1 of pdf
+      expect(textFound).toBe('Due date')
+    })
+    test('gets desired text on different page from anchor phrase, using multiple phrase counts, and first phrase being part of same line as anchor phrase', () => {
+      const textFound = initCellValueGenerator().getCellSectValueFromPosition(recurringDocPDFCellValues.dataRows[0].dataCells[8].cellSects[1]) 
+      //page 2 of pdf contains target phrase
+      expect(textFound).toBe('Your Company')
+    })
+    test('gets desired text using multiple phrase counts, first phrase not being part of same line as anchor phrase', () => {
+      const textFound = initCellValueGenerator().getCellSectValueFromPosition(recurringDocPDFCellValues.dataRows[0].dataCells[8].cellSects[2]) 
+      //page 1 of pdf
+      expect(textFound).toBe('Invoice #')
+    })
+    test('gets desired text on different page from anchor phrase, using multiple phrase counts, and first phrase not being part of same line as anchor phrase', () => {
+      const textFound = initCellValueGenerator().getCellSectValueFromPosition(recurringDocPDFCellValues.dataRows[0].dataCells[8].cellSects[3]) 
+      //page 2 of pdf contains target phrase
+      expect(textFound).toBe('Expense Report')
+    })
+    test('returns empty string when phrase count exceeds phrases in doc', () => {
+      const textFound = initCellValueGenerator().getCellSectValueFromPosition(recurringDocPDFCellValues.dataRows[0].dataCells[9].cellSects[0]) 
+      //page 2 of pdf
+      expect(textFound).toBe('')
+    })
   })
 
   describe('parsing text using top key phrase', () => {
@@ -202,6 +227,21 @@ describe('parsing doc text using anchor phrases', () => {
     test('returns empty string when key phrase not found', () => {     
       const textFound = initCellValueGenerator().getCellSectValueFromPosition(recurringDocPDFCellValues.dataRows[0].dataCells[4].cellSects[3]) 
       expect(textFound).toBe('')
+    })
+    test('gets desired text using multiple phrase counts, anchor phrase being just part of a line\'s text', () => {
+      const textFound = initCellValueGenerator().getCellSectValueFromPosition(recurringDocPDFCellValues.dataRows[0].dataCells[9].cellSects[1]) 
+      //page 1 of pdf
+      expect(textFound).toBe('Notes:')
+    })
+    test('gets empty string (does not parse next page) when using multiple phrase counts, when anchor is just part of a line\'s text, and does not share x-coordinate with target phrase', () => {
+      const textFound = initCellValueGenerator().getCellSectValueFromPosition(recurringDocPDFCellValues.dataRows[0].dataCells[9].cellSects[2]) 
+      //page 1 of pdf
+      expect(textFound).toBe('')
+    })
+    test('gets desired text using multiple phrase counts, anchor phrase being the entire line\'s text', () => {
+      const textFound = initCellValueGenerator().getCellSectValueFromPosition(recurringDocPDFCellValues.dataRows[0].dataCells[9].cellSects[3]) 
+      //page 1 of pdf
+      expect(textFound).toBe('Adjustments')
     })
   })
 })
