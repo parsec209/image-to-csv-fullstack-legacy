@@ -88,6 +88,9 @@
           <p class="errorDisplay" v-if="dataCellErrors.length > 0">
             TABLE CELL SECTION ERRORS: Please fix errors in the following cell sections: {{ dataCellErrors.join(', ') }} 
           </p>
+          <p class="notesDisplay" v-if="notes.length > 0">
+            The following cell sections contain notes: {{ notes.join(', ') }} 
+          </p>
           <b-table-simple striped hover bordered sticky-header responsive>
             <b-thead class="text-center">
               <b-tr>
@@ -299,6 +302,16 @@
                           :disabled="!cellSect.searchOrInputMethod.$model"
                         >
                         </b-form-spinbutton>
+                        <br>
+                        <br>
+                        <b-form-textarea
+                          v-model="cellSect.notes.$model"
+                          placeholder="Enter notes..."
+                          rows="2"
+                          max-rows="6"
+                          :disabled="!cellSect.searchOrInputMethod.$model"
+                        >
+                        </b-form-textarea>
                       </div>
                     </b-modal>
                   </div> 
@@ -379,6 +392,7 @@ export default {
       headers: [],
       headerCellErrors: [],
       dataCellErrors: [],
+      notes: [],
       isLoading: false,
       postError: ''
     }
@@ -415,7 +429,8 @@ export default {
                   dateFormat: {
                     areValidDateChars
                   },
-                  daysAdded: {}
+                  daysAdded: {},
+                  notes: {}
                 }
               }
             }
@@ -441,16 +456,30 @@ export default {
       }
     },
 
-    //Helps user to quickly find which table data cells contain errors
+    //Display that helps user to quickly find which table data cell sections contain errors
     displayDataCellErrors() {
       this.dataCellErrors = []
       for (const x in this.$v.form.dataRows.$each.$iter) {
         for (const y in this.$v.form.dataRows.$each.$iter[x].dataCells.$each.$iter) {
-           for (const z in this.$v.form.dataRows.$each.$iter[x].dataCells.$each.$iter[y].cellSects.$each.$iter) {
-              if (this.$v.form.dataRows.$each.$iter[x].dataCells.$each.$iter[y].cellSects.$each.$iter[z].$anyError) {
-                this.dataCellErrors.push(`${this.columnLetters[parseInt(y, 10) % 52]}${parseInt(x, 10) + 2}-Section ${parseInt(z, 10) + 1}`)
-              }
-           }
+          for (const z in this.$v.form.dataRows.$each.$iter[x].dataCells.$each.$iter[y].cellSects.$each.$iter) {
+            if (this.$v.form.dataRows.$each.$iter[x].dataCells.$each.$iter[y].cellSects.$each.$iter[z].$anyError) {
+              this.dataCellErrors.push(`${this.columnLetters[parseInt(y, 10) % 52]}${parseInt(x, 10) + 2}-Section ${parseInt(z, 10) + 1}`)
+            }
+          }
+        }
+      }
+    },
+
+    //Display that helps user to quickly find which table data cell sections contain notes
+    displayNotes() {
+      this.notes = []
+      for (const x in this.$v.form.dataRows.$each.$iter) {
+        for (const y in this.$v.form.dataRows.$each.$iter[x].dataCells.$each.$iter) {
+          for (const z in this.$v.form.dataRows.$each.$iter[x].dataCells.$each.$iter[y].cellSects.$each.$iter) {
+            if (this.$v.form.dataRows.$each.$iter[x].dataCells.$each.$iter[y].cellSects.$each.$iter[z].notes.$model) {
+              this.notes.push(`${this.columnLetters[parseInt(y, 10) % 52]}${parseInt(x, 10) + 2}-Section ${parseInt(z, 10) + 1}`)
+            }
+          }
         }
       }
     },
@@ -527,7 +556,8 @@ export default {
         phraseCount: 1,  
         appendChars: '',
         dateFormat: '',
-        daysAdded: 0
+        daysAdded: 0,
+        notes: ''
       }
       //do not add another sect if current sect has 'Empty cell' selected
       const currentSect = cellSects[cellSects.length - 1]
@@ -558,6 +588,7 @@ export default {
         sect.appendChars.$model = ''
         sect.dateFormat.$model = ''
         sect.daysAdded.$model = 0
+        sect.notes.$model = ''
         sect.$reset()
       } else if (sect.searchOrInputMethod.$model === 'today') {
         sect.phraseOrValue.$model = ''
@@ -680,7 +711,8 @@ export default {
         phraseCount: 1,  
         appendChars: '',
         dateFormat: '',
-        daysAdded: 0
+        daysAdded: 0,
+        notes: ''
       }
       dataRows.forEach(row => {
         row.dataCells.forEach(cell => {
@@ -760,7 +792,7 @@ export default {
           idPhrase2: this.form.idPhrase2, 
           header: this.form.headerCells, 
           dataRows: this.form.dataRows 
-          })         
+        })         
       }
       this.$router.push({ name: 'Index', params: { templateType: this.templateType, msg: { text: `${this.form.name} successfully added`, context: 'success' }}})
     },
@@ -775,7 +807,8 @@ export default {
           idPhrase: this.form.idPhrase, 
           idPhrase2: this.form.idPhrase2, 
           header: this.form.headerCells, 
-          dataRows: this.form.dataRows })         
+          dataRows: this.form.dataRows 
+        })         
       }
       this.$router.push({ name: 'Index', params: { templateType: this.templateType, msg: { text: `${this.form.name} successfully updated`, context: 'success' }}})
     },
@@ -816,6 +849,7 @@ export default {
         }
         this.resetColumnLetters()
         await this.getHeaders()
+        this.displayNotes()
       } catch (err) {
         this.handleFetchError(err)
       }
@@ -837,6 +871,11 @@ export default {
 
 .errorDisplay {
   color: red;
+}
+
+.notesDisplay {
+  color: green;
+  font-size: small;
 }
 
 .table {

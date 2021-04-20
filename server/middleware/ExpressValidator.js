@@ -147,13 +147,16 @@ module.exports = {
               if (cellSects[index]['phraseOrValue']) {
                 cellSects[index]['phraseOrValue'] = cellSects[index]['phraseOrValue'].trim()
               }
+              if (cellSects[index]['notes']) {
+                cellSects[index]['notes'] = cellSects[index]['notes'].trim()
+              }
             })
           })
         })
         return value
       }),
   
-
+      
   ExpressValidation: (req, res, next) => {
     const errors = validationResult(req)
     if (!errors.isEmpty()) { 

@@ -186,7 +186,9 @@ describe('posting a document', () => {
       dataRows: [
         { dataCells: [ 
           { cellSects: [
-            {}
+            {
+              notes: 'testing notes',
+            }
           ]},
         ]}
       ],
@@ -196,6 +198,7 @@ describe('posting a document', () => {
     expect(postedDoc.name).toBe('postDoc')
     expect(postedDoc.idPhrase).toBe('postPhrase')
     expect(postedDoc.header).toHaveLength(1)
+    expect(postedDoc.dataRows[0].dataCells[0].cellSects[0].notes).toBe('testing notes')
     expect(postedDoc.dataRows[0].dataCells[0].cellSects).toHaveLength(1)
   })
 })

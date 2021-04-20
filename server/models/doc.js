@@ -36,6 +36,9 @@ const cellSectSchema = new mongoose.Schema({
     min: 0,
     max: 100, 
     validate: [util.daysAddedIsInteger]   
+  },
+  notes: {
+    type: String
   }
 })
 

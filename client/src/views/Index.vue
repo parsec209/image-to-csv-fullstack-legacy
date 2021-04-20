@@ -27,6 +27,7 @@
             >
               {{ template.name }}
               <div>
+                <b-badge class="mr-1" variant="warning" v-if="template.hasNotes">Notes</b-badge>
                 <b-badge class="mr-1" href="#"  @click="deleteTemplate(template)" variant="secondary">Delete</b-badge>
                 <b-badge href="#"  @click="copyTemplate(template)" variant="secondary">Copy</b-badge>
               </div>
@@ -76,12 +77,33 @@ export default {
       return variant
     },
 
+    markTemplatesWithNotes() {
+      this.templates.forEach(template => {
+        if (template.idPhrase) {
+          for (let j = 0; j < template.dataRows.length; j++) {
+            let row = template.dataRows[j]
+            for (let k = 0; k < row.dataCells.length; k++) {
+              let cell = row.dataCells[k]
+              for (let l = 0; l < cell.cellSects.length; l++) {
+                let sect = cell.cellSects[l]
+                if (sect.notes) {
+                  template.hasNotes = true
+                  return
+                }
+              }
+            }
+          }
+        }
+      })
+    },
+
     async getTemplates() {
       this.isLoading = true
       try {
         const res = await axios.get(`/api/${this.templateType}s/`)
         this.templates = res.data
         this.templates.sort((a, b) => (a.name > b.name) ? 1 : -1)
+        this.markTemplatesWithNotes()
         this.isLoading = false
       } catch (err) {
         const errInfo = errorHandler(err)
@@ -126,11 +148,12 @@ export default {
     },
 
     //helper for copyTemplate method
-    getDataRowsWithoutIds(rows) {
+    getDataRowsWithoutIdsOrNotes(rows) {
       rows.forEach((row, index, rows) => {
         row.dataCells.forEach((cell, index, cells) => {
           cell.cellSects.forEach((sect, index, sects) => {
             delete sects[index]._id
+            delete sects[index].notes
           })
           delete cells[index]._id
         })
@@ -153,7 +176,7 @@ export default {
             name: newTemplateName, 
             idPhrase: newTemplateIdPhrase, 
             header: this.getHeaderCellsWithoutIds(template.header), 
-            dataRows: this.getDataRowsWithoutIds(template.dataRows) 
+            dataRows: this.getDataRowsWithoutIdsOrNotes(template.dataRows) 
           })
           newTemplate = res.data
         }
