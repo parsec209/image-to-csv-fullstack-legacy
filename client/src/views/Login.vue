@@ -12,6 +12,8 @@
                 <b-alert :show="Object.keys(status).length > 0" :variant="status.context">{{ status.text }}</b-alert>
                 <div v-if="isLoading">
                   <b-spinner variant="secondary" label="Loading"></b-spinner>
+                  <br>
+                  <br>
                 </div>   
                 <h3>Login</h3>
               </div>

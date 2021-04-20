@@ -10,6 +10,8 @@
             <b-alert :show="postError.length > 0" variant="danger">{{ postError }}</b-alert>
             <div v-if="isLoading">
               <b-spinner variant="secondary" label="loading"></b-spinner>
+              <br>
+              <br>
             </div>   
             <h3>{{ templateType === 'doc' ? 'Recurring Document' : 'CSV Header' }}</h3>
           </div>
@@ -256,7 +258,7 @@
                           :disabled="!cellSect.searchOrInputMethod.$model"
                         >
                         </b-form-input>
-                        <pre>Appended characters: "{{ cellSect.appendChars.$model }}"</pre> 
+                        <pre :class="{ appendedChars: cellSect.appendChars.$model }">Appended characters: "{{ cellSect.appendChars.$model }}"</pre> 
                       </b-form-group>
                       <br>
                       <label for="formatDate-input">
@@ -889,6 +891,10 @@ td {
 .popover-body {
   height: 150px;
   overflow-y: auto;
+}
+
+.appendedChars {
+  color: green;
 }
 
 </style>

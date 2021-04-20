@@ -11,6 +11,8 @@
             <b-alert :show="Object.keys(postStatus).length > 0 && loadError.length === 0" :variant="postStatus.context">{{ postStatus.text }}</b-alert>
             <div v-if="isLoading">
               <b-spinner variant="secondary" label="Loading"></b-spinner>
+              <br>
+              <br>
             </div>   
           </div>
           <br>
@@ -44,6 +46,7 @@
 
 <script>
 import axios from 'axios'
+import { v4 as uuidv4 } from 'uuid'
 import Navbar from '../components/Navbar.vue'
 import { errorHandler } from '../util/errors'
 
@@ -164,14 +167,14 @@ export default {
 
     async copyTemplate(template) {
       let newTemplate
-      let newTemplateName = template.name + '-COPY'
+      let newTemplateName = template.name + '-COPY-' + uuidv4().substring(0, 5)
       this.isLoading = true
       try {
         if (template.cells) {
           let res = await axios.post('/api/headers/', { name: newTemplateName, cells: this.getHeaderCellsWithoutIds(template.cells) })
           newTemplate = res.data
         } else {
-          let newTemplateIdPhrase = template.idPhrase + '-COPY'
+          let newTemplateIdPhrase = template.idPhrase + '-COPY-' + uuidv4().substring(0, 5)
           let res = await axios.post('/api/docs/', { 
             name: newTemplateName, 
             idPhrase: newTemplateIdPhrase, 

@@ -12,6 +12,8 @@
                 <b-alert :show="errorMsg.length > 0" variant="danger">{{ errorMsg }}</b-alert>
                 <div v-if="isLoading">
                   <b-spinner variant="secondary" label="Loading"></b-spinner>
+                  <br>
+                  <br>
                 </div>   
                 <h3>Reset password</h3>
               </div>

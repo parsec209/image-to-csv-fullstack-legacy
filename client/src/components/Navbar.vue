@@ -13,7 +13,6 @@
             <b-dropdown-item to="/profile">Account settings</b-dropdown-item>
             <b-dropdown-item to="/index/header">My headers</b-dropdown-item>
             <b-dropdown-item to="/index/doc">My recurring documents</b-dropdown-item>
-            <b-dropdown-item to="/usage">API usage</b-dropdown-item>
             <b-dropdown-item @click="logout"><em>Logout</em></b-dropdown-item>
           </b-nav-item-dropdown>
         </b-navbar-nav>
