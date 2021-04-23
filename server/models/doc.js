@@ -66,13 +66,11 @@ const docSchema = new mongoose.Schema({
     type: String,
     required: true,
     maxlength: 100,
-    unique: true 
   }, 
   idPhrase: {
     type: String,
     required: true,
     maxlength: 100,
-    unique: true
   },
   idPhrase2: {
     type: String,

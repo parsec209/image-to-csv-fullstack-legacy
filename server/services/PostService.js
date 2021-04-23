@@ -4,6 +4,7 @@
  */
 
 const { validateArgs } = require('../util/ArgsValidator')
+const InputError = require('../util/InputError')
 
 // @ts-check
 
@@ -57,6 +58,20 @@ class PostService {
   async post(props) {  
     validateArgs(['{user: Object, ...}'], arguments)
     const document = new this.model(props)
+
+    const countDupNames = await this.model.countDocuments({ name: document.name, 'user.id': document.user.id })
+    if (countDupNames) {
+      throw new InputError(`The following name has already been used: ${document.name}`, 400)
+    }
+
+    //only for recurring docs 
+    if (document.idPhrase) {
+      const countDupIDPhrases = await this.model.countDocuments({ idPhrase: document.idPhrase, 'user.id': document.user.id })
+      if (countDupIDPhrases) {
+        throw new InputError(`The following ID phrase has already been used: ${document.idPhrase}`, 400)
+      }
+    }
+
     await document.save()
     return document
   }
@@ -70,6 +85,22 @@ class PostService {
    */
   async update(document, props) {  
     validateArgs(['{name: String, user: Object, ...}', 'Object'], arguments)
+
+    if (props.hasOwnProperty('name')) {
+      const countDupNames = await this.model.countDocuments({ name: props.name, _id: { $ne: document._id }, 'user.id': document.user.id })
+      if (countDupNames) {
+        throw new InputError(`The following name has already been used: ${props.name}`, 400)
+      }
+    }
+
+    //only for recurring docs 
+    if (props.hasOwnProperty('idPhrase')) {
+      const countDupIDPhrases = await this.model.countDocuments({ idPhrase: props.idPhrase, _id: { $ne: document._id }, 'user.id': document.user.id })
+      if (countDupIDPhrases) {
+        throw new InputError(`The following ID phrase has already been used: ${props.idPhrase}`, 400)
+      }
+    }
+
     for (let prop in props) {
       document[prop] = props[prop]
     }
