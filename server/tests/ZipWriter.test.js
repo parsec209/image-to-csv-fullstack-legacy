@@ -32,7 +32,7 @@ beforeAll(async () => {
 
 afterAll(async () => {
   await bucket.deleteFiles()
-  await dbConnection.dropCollection('users')
+  await dbConnection.dropDatabase()
   await dbConnection.close()
   console.log('Database connection closed')
 })

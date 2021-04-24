@@ -65,8 +65,7 @@ beforeAll(async () => {
  
 
 afterAll(async () => {
-  await dbConnection.dropCollection('users')
-  await dbConnection.dropCollection('docs')
+  await dbConnection.dropDatabase()
   await dbConnection.close()
   console.log('Database connection closed')
 })

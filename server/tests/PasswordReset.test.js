@@ -37,9 +37,7 @@ afterEach(async () => {
 
 
 afterAll(async () => {
-  await dbConnection.dropCollection('docs')
-  await dbConnection.dropCollection('headers')
-  await dbConnection.dropCollection('sessions')
+  await dbConnection.dropDatabase()
   await dbConnection.close()
   console.log('Database connection closed')
 })

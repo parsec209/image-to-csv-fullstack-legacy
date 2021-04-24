@@ -41,31 +41,36 @@ class CSVGenerator {
   }
 
 
-  
-
-
   /**
    * Parses each document's text to see if it contains one of the recurring document ID phrases 
    * @param {Array<DocText>} docsText - Extracted text from all the docs in the batch
    * @param {Array<Object>} recurringDocs - Mongoose Doc model instances (recurring documents)
    * @returns {MatchedText} - Filenames of the uploads where ID phrases were found or not found, and the the recurring doc instances that contain those ID phrases   
    */
-  identifyDocText(docsText, recurringDocs) {
+   identifyDocText(docsText, recurringDocs) {
     validateArgs(['[{fileName: String, extraction: Array}]', '[{_id: Object, name: String, idPhrase: String, header: Array, dataRows: Array, user: Object, ...}]'], arguments)
     const matchedDocsText = []
     const unmatchedDocsText = []
     const matchedRecurringDocs = []
     docsText.forEach(function(docText) {
+      let idPhraseFound = false
+      let idPhrase2Found = false
       for (let i = 0; i < docText.extraction.length; i++) {
         let page = docText.extraction[i]
         for (let i = 0; i < recurringDocs.length; i++) {
-          let recurringDoc = recurringDocs[i]
-          if (page.fullTextAnnotation && 
-            page.fullTextAnnotation.text.includes(recurringDoc.idPhrase) &&
-            (recurringDoc.idPhrase2 ? page.fullTextAnnotation.text.includes(recurringDoc.idPhrase2) : true)) {
-            matchedRecurringDocs.push({ fileName: docText.fileName, recurringDoc })
-            matchedDocsText.push(docText.fileName)
-            return
+          let recurringDoc = recurringDocs[i]      
+          if (page.fullTextAnnotation) {
+            if (!idPhraseFound && page.fullTextAnnotation.text.includes(recurringDoc.idPhrase)) {
+              idPhraseFound = true
+            }
+            if (recurringDoc.idPhrase2 && !idPhrase2Found && page.fullTextAnnotation.text.includes(recurringDoc.idPhrase2)) {
+              idPhrase2Found = true
+            }
+            if (idPhraseFound && (recurringDoc.idPhrase2 ? idPhrase2Found : true)) {
+              matchedRecurringDocs.push({ fileName: docText.fileName, recurringDoc })
+              matchedDocsText.push(docText.fileName)
+              return
+            }
           }          
         }
       }

@@ -46,7 +46,7 @@ beforeAll(async () => {
 
 afterAll(async () => {
   await bucket.deleteFiles()
-  await dbConnection.dropCollection('users')
+  await dbConnection.dropDatabase()
   await dbConnection.close()
   console.log('Database connection closed')
 })
@@ -170,7 +170,7 @@ describe('generating data from uploads, starting with text extraction and ending
       }
     }
     const options2 = {
-      destination: `${userID}/uploads/${fileBatchID}/TIFF.tiff`,
+      destination: `${userID}/uploads/${fileBatchID}/TIF.tif`,
       metadata: {
         contentType: 'image/tiff'
       }
@@ -182,13 +182,13 @@ describe('generating data from uploads, starting with text extraction and ending
       }
     }
     await bucket.upload(__dirname + '/seeds/uploads/cloud/validExts/PDF_editable.pdf', options1)
-    await bucket.upload(__dirname + '/seeds/uploads/cloud/validExts/TIFF.tiff', options2)
+    await bucket.upload(__dirname + '/seeds/uploads/cloud/validExts/TIF.tif', options2)
     await bucket.upload(__dirname + '/seeds/uploads/cloud/validExts/GIF.GIF', options3)
     const csvGenerator = new CSVGenerator(user, uuidv4(), fileBatchID, [1, 2, 3], '2020/01/20')
     const successStatus = await csvGenerator.compileData()
     const expected = {
       identifiedDocs: ['PDF_editable.pdf', 'GIF.GIF'],
-      unidentifiedDocs: ['TIFF.tiff']
+      unidentifiedDocs: ['TIF.tif']
     }
     expect(JSON.stringify(successStatus.identifiedDocs.sort())).toBe(JSON.stringify(expected.identifiedDocs.sort()))
     expect(JSON.stringify(successStatus.unidentifiedDocs.sort())).toBe(JSON.stringify(expected.unidentifiedDocs.sort()))

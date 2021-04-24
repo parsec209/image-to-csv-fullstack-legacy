@@ -52,10 +52,7 @@ beforeAll(async () => {
 
 
 afterAll(async () => {
-  await dbConnection.dropCollection('users')
-  await dbConnection.dropCollection('sessions')
-  await dbConnection.dropCollection('headers')
-  await dbConnection.dropCollection('docs')
+  await dbConnection.dropDatabase()
   await dbConnection.close()
   console.log('Database connection closed')
 })
@@ -93,9 +90,9 @@ describe('handling trusted API errors as operational errors', () => {
       header = await agent
         .post('/api/headers')
         .send({ name, cells })
-      expect(header.body.message).toBe('The same value already exists for the following field: { name: "name" }')
-      expect(header.body.status).toBe('error')
-      expect(header.statusCode).toBe(500)
+      expect(header.body.message).toBe('The following name has already been used: name')
+      expect(header.body.status).toBe('fail')
+      expect(header.statusCode).toBe(400)
     })
     test('handles UserExistsError (passport-local-mongoose)', async () => {
       const user = await request(app)

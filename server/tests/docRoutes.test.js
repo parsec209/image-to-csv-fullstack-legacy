@@ -52,10 +52,7 @@ beforeAll(async () => {
 
 
 afterAll(async () => {
-  await dbConnection.dropCollection('users')
-  await dbConnection.dropCollection('docs')
-  await dbConnection.dropCollection('headers')
-  await dbConnection.dropCollection('sessions')
+  await dbConnection.dropDatabase()
   await dbConnection.close()
   console.log('Database connection closed')
 })
@@ -108,7 +105,7 @@ describe('GET /api/docs/:id', () => {
 describe('POST /api/docs', () => {
   test('posts doc and responds with doc object', async () => {
     const name = 'postTest'
-    const idPhrase = 'postPhrase'
+    const idPhrase = 'postPhrase123'
     const header = [{ value: 'headercell' }]
     const dataRows = [
       { dataCells: [ 

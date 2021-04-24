@@ -53,7 +53,7 @@ afterEach(async () => {
 
 
 afterAll(async () => {
-  await dbConnection.dropCollection('users')
+  await dbConnection.dropDatabase()
   await dbConnection.close()
   console.log('Database connection closed')
 })
