@@ -47,18 +47,18 @@ class CSVGenerator {
    * @param {Array<Object>} recurringDocs - Mongoose Doc model instances (recurring documents)
    * @returns {MatchedText} - Filenames of the uploads where ID phrases were found or not found, and the the recurring doc instances that contain those ID phrases   
    */
-   identifyDocText(docsText, recurringDocs) {
+  identifyDocText(docsText, recurringDocs) {
     validateArgs(['[{fileName: String, extraction: Array}]', '[{_id: Object, name: String, idPhrase: String, header: Array, dataRows: Array, user: Object, ...}]'], arguments)
     const matchedDocsText = []
     const unmatchedDocsText = []
     const matchedRecurringDocs = []
     docsText.forEach(function(docText) {
-      let idPhraseFound = false
-      let idPhrase2Found = false
-      for (let i = 0; i < docText.extraction.length; i++) {
-        let page = docText.extraction[i]
-        for (let i = 0; i < recurringDocs.length; i++) {
-          let recurringDoc = recurringDocs[i]      
+      for (let i = 0; i < recurringDocs.length; i++) {
+        let recurringDoc = recurringDocs[i]      
+        let idPhraseFound = false
+        let idPhrase2Found = false
+        for (let i = 0; i < docText.extraction.length; i++) {
+          let page = docText.extraction[i]
           if (page.fullTextAnnotation) {
             if (!idPhraseFound && page.fullTextAnnotation.text.includes(recurringDoc.idPhrase)) {
               idPhraseFound = true
@@ -71,7 +71,7 @@ class CSVGenerator {
               matchedDocsText.push(docText.fileName)
               return
             }
-          }          
+          }
         }
       }
       unmatchedDocsText.push(docText.fileName)
