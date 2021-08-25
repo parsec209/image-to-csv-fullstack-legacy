@@ -7,7 +7,6 @@ import Landing from '../views/Landing.vue'
 import Login from '../views/Login.vue'
 import Register from '../views/Register.vue'
 import Instructions from '../views/Instructions.vue'
-import Demo from '../views/Demo.vue'
 import Profile from '../views/Profile.vue'
 import Forgot from '../views/Forgot.vue'
 import Reset from '../views/Reset.vue'
@@ -37,11 +36,6 @@ const routes = [
     path: '/register',
     name: 'Register',
     component: Register
-  },
-  {
-    path: '/demo',
-    name: 'Demo',
-    component: Demo
   },
   {
     path: '/instructions',
@@ -119,8 +113,8 @@ router.beforeEach(async (to, from, next) => {
     errMsg = errorHandler(err).message
   }    
 
-  //to demo or instructions pages, ok to enter if authenticated or not
-  if (to.name === 'Demo' || to.name === 'Instructions') {
+  //to instructions page, ok to enter if authenticated or not
+  if (to.name === 'Instructions') {
     next()
 
   //to auth pages, ok to enter if authenticated

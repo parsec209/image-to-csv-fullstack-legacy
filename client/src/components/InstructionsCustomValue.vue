@@ -1,7 +1,7 @@
 <template>
   <p>
-    The <strong>custom value</strong> option will use whatever value you input into the <i>Search phrase or literal value</i> field as the cell 
-    section value. The application will not scan the text for anything.
+    The <strong>custom value</strong> option will use whatever value you input into the <i>search string</i> field as the cell 
+    section value. The application will not scan the document text for anything.
   </p>
 </template>    
 

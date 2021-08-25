@@ -10,22 +10,35 @@
             <h3>Instructions</h3>
           </div>
         </template>
-        <p> In order to extract text variables across a set of similar documents, such as metadata values, the application needs some sort of text constants within 
-          these documents as a starting point. The two text constants this application can look for in a document are <i>anchor phrases</i> and <i>text patterns</i>. 
-          Anchor phrases, which can be field names like "Invoice #" or "PO Number", are expected to be in the same relative 
-          position to the metadata values in each subsequent document. A text pattern is found within the metadata value itself (i.e. you know the value will be a ten digit number 
-          in each subsequent document). When you receive a set of documents regularly that contain such 
-          constants, it can be setup as a <strong>recurring document</strong>. A recurring doc is a set of rules you configure that tells the 
-          application what text constants to look for in order to find and extract your desired metadata values. A recurring doc also specifies where and how you want the 
-          field names and values to appear in the generated CSV file.
-          <br>
-          <br>
-          You can add, edit, and delete recurring documents in the <b-link to="/index/doc">My recurring documents</b-link> page. This will be the starting point if this is your
+        <br>
+        <p>This application generates CSV files from uploaded image files via the following steps:</p>
+        <br>
+        <ol>
+          <li>Performs OCR on the image file</li>
+          <li>Gathers all of the relevant metadata from the extracted text</li>
+          <li>Places the metadata into specific records and fields of a CSV file</li>
+          <li>Outputs the CSV file for download</li>
+        </ol>  
+        <br>      
+        <p>There is no guesswork done on what metadata to extract and what records/fields of the CSV file it should be placed in, that is all specified by the user beforehand
+          via a set of rules for each type of similarly-formatted document, called a <i>recurring document</i>. The ideal candidate for a recurring document is one that is
+          received regularly (i.e. a specific invoice from a vendor) and that has predictable characteristics in its text and formatting each time it is received. 
+          This way the application will be able to recognize this document and use the same methods everytime to retrieve the desired metadata from its text.
+          In general, the only thing that should really change between each document is the metadata values you need for the CSV file (i.e. invoice number, balance due, etc.).
+          The use of <i>anchor phrases</i> (i.e. getting a value located next to a field name in an image) and <i>regular expressions</i> (predictable text patterns) are the two
+          text retrieval methods this application uses, and there is also the option to have CSV fields contain values not found in the text, such as a user-specified input
+          or today's date. Additional features can be added to retrieved values, such as date formatting or added days (if the value is recognized as a date), 
+          and character appendage to the end of a value. Lastly, there is the flexibility to combine multiple pieces of metadata together into a single CSV field. For example,
+          you can use one method for retrieving a statement# and another for a statement date, and combine these two values together into a single CSV field with a hyphen
+          in between them (using the character appendage feature previously mentioned).
+        </p>
+        <br>
+        <p> You can add, edit, and delete recurring documents in the <b-link to="/index/doc">My recurring documents</b-link> page. This will be the starting point if this is your
           first time using the application. 
           <br>
           <br>
           The list below includes instructions for individual sections of a recurring document setup page, as well as for the file upload page. For your convenience, 
-          many parts of these instructions are also embedded in the actual pages, just look for any question mark icons.
+          many parts of these instructions are also embedded in the actual pages, just look for the question mark icons.
         </p>
         <b-icon icon="file-earmark-text"></b-icon>
         <b-button v-b-toggle.doc-IDPhrase-guide variant="link">Recurring document ID phrase</b-button>
@@ -57,25 +70,25 @@
           <b-card>
             <InstructionsDataCells/>
             <br>
-            <p>The <strong>text search and input methods</strong> within each cell section are as follows:</p>
-            <b-button v-b-toggle.doc-body-cellSect-rules-searchInput-leftPhrase-guide  variant="link">Left anchor phrase</b-button>
+            <p>The <strong>string search methods</strong> within each cell section are as follows:</p>
+            <b-button v-b-toggle.doc-body-cellSect-rules-searchInput-leftPhrase-guide  variant="link">Anchor phrase - horizontal search</b-button>
             <b-collapse id="doc-body-cellSect-rules-searchInput-leftPhrase-guide" class="mt-2">
               <b-card>
-                <InstructionsLeftPhrase/>
+                <InstructionsAnchorHoriz/>
               </b-card>
             </b-collapse>
             <br>
-            <b-button v-b-toggle.doc-body-cellSect-rules-searchInput-topPhrase-guide  variant="link">Top anchor phrase</b-button>
+            <b-button v-b-toggle.doc-body-cellSect-rules-searchInput-topPhrase-guide  variant="link">Anchor phrase - vertical search</b-button>
             <b-collapse id="doc-body-cellSect-rules-searchInput-topPhrase-guide" class="mt-2">
               <b-card>
-                <InstructionsTopPhrase/>
+                <InstructionsAnchorVert/>
               </b-card>
             </b-collapse>
             <br>
-            <b-button v-b-toggle.doc-body-cellSect-rules-searchInput-textPattern-guide  variant="link">Text pattern</b-button>
+            <b-button v-b-toggle.doc-body-cellSect-rules-searchInput-textPattern-guide  variant="link">Regular Expression</b-button>
             <b-collapse id="doc-body-cellSect-rules-searchInput-textPattern-guide" class="mt-2">
               <b-card>
-                <InstructionsTextPattern/>
+                <InstructionsRegExp/>
               </b-card>
             </b-collapse>
             <br>
@@ -101,9 +114,12 @@
             </b-collapse>
             <br>
             <br>
-            <InstructionsPhraseOrValue/> 
+            <InstructionsSearchString/> 
             <br>        
-            <InstructionsAddPhraseCount/> 
+            <InstructionsStringRetrievalType/> 
+            <br>
+            <br>        
+            <InstructionsStringCount/> 
             <br>        
             <InstructionsAppendChars/> 
             <br>
@@ -132,14 +148,15 @@ import InstructionsDocID from '../components/InstructionsDocID.vue'
 import InstructionsHeaders from '../components/InstructionsHeaders.vue'
 import InstructionsHeaderCells from '../components/InstructionsHeaderCells.vue'
 import InstructionsDataCells from '../components/InstructionsDataCells.vue'
-import InstructionsLeftPhrase from '../components/InstructionsLeftPhrase.vue'
-import InstructionsTopPhrase from '../components/InstructionsTopPhrase.vue'
-import InstructionsTextPattern from '../components/InstructionsTextPattern.vue'
+import InstructionsAnchorHoriz from '../components/InstructionsAnchorHoriz.vue'
+import InstructionsAnchorVert from '../components/InstructionsAnchorVert.vue'
+import InstructionsRegExp from '../components/InstructionsRegExp.vue'
 import InstructionsCustomValue from '../components/InstructionsCustomValue.vue'
 import InstructionsTodayDate from '../components/InstructionsTodayDate.vue'
 import InstructionsEmptySect from '../components/InstructionsEmptySect.vue'
-import InstructionsPhraseOrValue from '../components/InstructionsPhraseOrValue.vue'
-import InstructionsAddPhraseCount from '../components/InstructionsAddPhraseCount.vue'
+import InstructionsSearchString from '../components/InstructionsSearchString.vue'
+import InstructionsStringRetrievalType from '../components/InstructionsStringRetrievalType.vue'
+import InstructionsStringCount from '../components/InstructionsStringCount.vue'
 import InstructionsAppendChars from '../components/InstructionsAppendChars.vue'
 import InstructionsFormatDate from '../components/InstructionsFormatDate.vue'
 import InstructionsAddDays from '../components/InstructionsAddDays.vue'
@@ -154,14 +171,15 @@ export default {
     InstructionsHeaders,
     InstructionsHeaderCells,
     InstructionsDataCells,
-    InstructionsLeftPhrase,
-    InstructionsTopPhrase,
-    InstructionsTextPattern,
+    InstructionsAnchorHoriz,
+    InstructionsAnchorVert,
+    InstructionsRegExp,
     InstructionsCustomValue,
     InstructionsTodayDate,
     InstructionsEmptySect,
-    InstructionsPhraseOrValue,
-    InstructionsAddPhraseCount,
+    InstructionsSearchString,
+    InstructionsStringRetrievalType,
+    InstructionsStringCount,
     InstructionsAppendChars,
     InstructionsFormatDate,
     InstructionsAddDays,

@@ -63,7 +63,7 @@
 
 
 /**
- * Text extraction for all doc pages along with filename   
+ * Text extraction of all doc pages along with filename   
  * @typedef {Object} DocText
  * @property {string} fileName - Original filename of extracted doc
  * @property {Array&lt;AnnotateImageResponse>} extraction - Array of all the doc's extracted pages
@@ -71,64 +71,28 @@
 
 
 /**
- * Paragraph object created from text extraction. See {@link https://cloud.google.com/vision/docs/reference/rest/v1/AnnotateImageResponse#Paragraph}
- * @typedef {Object} Paragraph
+ * Word object from {@link AnnotateImageResponse}. See {@link https://cloud.google.com/vision/docs/reference/rest/v1/AnnotateImageResponse#Word}
+ * @typedef {Object} AnnotateImageResponseWord 
+ */
+
+ 
+/**
+ * List of {@link AnnotateImageResponseWord}s for each doc page, along with filename
+ * @typedef {Object} WordList 
+ * @property {string} fileName - Original filename of extracted doc
+ * @property {Array&lt;Array&lt;AnnotateImageResponseWord>>} words - Two dimensional array of the doc's words, grouped by page
  */
 
 
 /**
- * Word object created from text extraction. See {@link https://cloud.google.com/vision/docs/reference/rest/v1/AnnotateImageResponse#Word}
- * @typedef {Object} ParagraphWord 
+ * Anchor phrase indeces
+ * @typedef {Object} AnchorPhraseIndeces
+ * @property {number} pageIndex - doc index of the page containing the anchor phrase
+ * @property {number} startWordIndex - page index of the first word containing the anchor phrase
+ * @property {number} startSymbolIndex - word index of the first symbol containing the anchor phrase
+ * @property {number} endWordIndex - page index of the last word containing the anchor phrase
+ * @property {number} endSymbolIndex - word index of the last symbol containing the anchor phrase
  */
-
-
-/**
- * Word within a {@link Line}. Borrows some properties from {@link ParagraphWord}, along with having its own properties. 
- * @typedef {Object} LineWord
- * @property {string} wordText - same symbols (text) from {@link ParagraphWord}
- * @property {Array&lt;{x: number, y: number}>} vertices - same vertices from {@link ParagraphWord}
- * @property {number} startIndex - index of {@link LineText} where wordText begins 
- * @property {number} endIndex - index of {@link LineText} where wordText ends 
- */
-
-
-/**
- * Vertices within a {@link Line}. Uses the outermost vertices (lowest, highest, leftmost, rightmost) found within its {@link LineWord}s
- * @typedef {Object} LineVertices
- * @property {number} xUpperLeft - upper left x coordinate
- * @property {number} yUpperLeft - upper left y coordinate
- * @property {number} xLowerRight - lower right x coordinate
- * @property {number} yLowerRight - lower right y coordinate
- */
-
-
-/**
- * Text within a {@link Line}. Combines the text from each {@link LineWord} into a single string.
- * @typedef {string} LineText
- */
-
-
- /**
-  * Represents a single line of words from a {@link Paragraph}; the words have additional properties added to them, creating {@link LineWord}s
-  * @typedef {Object} Line
-  * @property {Array&lt;LineWord>} words - The line's words
-  * @property {LineVertices} vertices - The line's vertices
-  * @property {LineText} text - Combined text from line's words
-  */
-
-
- /**
-  * All lines within a doc page
-  * @typedef {Array&lt;Line>} PageLines
-  */
-
-
- /**
-  * All lines within a doc
-  * @typedef {Object} DocLines
-  * @property {string} fileName - Original filename of extracted doc
-  * @property {Array&lt;PageLines>} textLines - Array of {@link PageLines}
-  */
 
 
 /**
@@ -154,6 +118,7 @@
   * @property {Array&lt;Object>} CSVDataRows - Data rows
   */
 
+ 
  /**
   * Object used to write CSV file
   * @typedef {Object} consolidatedBlueprint
@@ -173,13 +138,13 @@
 </div>
 
 <nav>
-    <h2><a href="index.html">Img-To-CSV Services</a></h2><h3>Modules</h3><ul><li><a href="module-CellValueGenerator.html">CellValueGenerator</a></li><li><a href="module-CSVGenerator.html">CSVGenerator</a></li><li><a href="module-CSVWriter.html">CSVWriter</a></li><li><a href="module-PasswordReset.html">PasswordReset</a></li><li><a href="module-PostService.html">PostService</a></li><li><a href="module-TextExtractor.html">TextExtractor</a></li><li><a href="module-TextLineGenerator.html">TextLineGenerator</a></li><li><a href="module-Uploader.html">Uploader</a></li><li><a href="module-ZipWriter.html">ZipWriter</a></li></ul><h3>Classes</h3><ul><li><a href="module-CellValueGenerator-CellValueGenerator.html">CellValueGenerator</a></li><li><a href="module-CSVGenerator-CSVGenerator.html">CSVGenerator</a></li><li><a href="module-CSVWriter-CSVWriter.html">CSVWriter</a></li><li><a href="module-PostService-PostService.html">PostService</a></li><li><a href="module-TextExtractor-TextExtractor.html">TextExtractor</a></li><li><a href="module-TextLineGenerator-TextLineGenerator.html">TextLineGenerator</a></li><li><a href="module-Uploader-Uploader.html">Uploader</a></li><li><a href="module-ZipWriter-ZipWriter.html">ZipWriter</a></li></ul><h3>Tutorials</h3><ul><li><a href="tutorial-CellValueGenerator-tutorial.html">CellValueGenerator</a></li><li><a href="tutorial-CSVGenerator-tutorial.html">CSVGenerator</a></li><li><a href="tutorial-TextLineGenerator-tutorial.html">TextLineGenerator</a></li></ul><h3><a href="global.html">Global</a></h3>
+    <h2><a href="index.html">Img-To-CSV Services</a></h2><h3>Modules</h3><ul><li><a href="module-CellValueGenerator.html">CellValueGenerator</a></li><li><a href="module-CSVGenerator.html">CSVGenerator</a></li><li><a href="module-CSVWriter.html">CSVWriter</a></li><li><a href="module-PasswordReset.html">PasswordReset</a></li><li><a href="module-PostService.html">PostService</a></li><li><a href="module-TextExtractor.html">TextExtractor</a></li><li><a href="module-Uploader.html">Uploader</a></li><li><a href="module-WordListGenerator.html">WordListGenerator</a></li><li><a href="module-ZipWriter.html">ZipWriter</a></li></ul><h3>Classes</h3><ul><li><a href="module-CellValueGenerator-CellValueGenerator.html">CellValueGenerator</a></li><li><a href="module-CSVGenerator-CSVGenerator.html">CSVGenerator</a></li><li><a href="module-CSVWriter-CSVWriter.html">CSVWriter</a></li><li><a href="module-PostService-PostService.html">PostService</a></li><li><a href="module-TextExtractor-TextExtractor.html">TextExtractor</a></li><li><a href="module-Uploader-Uploader.html">Uploader</a></li><li><a href="module-WordListGenerator-WordListGenerator.html">WordListGenerator</a></li><li><a href="module-ZipWriter-ZipWriter.html">ZipWriter</a></li></ul><h3>Tutorials</h3><ul><li><a href="tutorial-CellValueGenerator-tutorial.html">CellValueGenerator</a></li><li><a href="tutorial-CSVGenerator-tutorial.html">CSVGenerator</a></li><li><a href="tutorial-WordListGenerator-tutorial.html">WordListGenerator</a></li></ul><h3><a href="global.html">Global</a></h3>
 </nav>
 
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.6</a> on Tue Apr 27 2021 21:13:48 GMT-0400 (Eastern Daylight Time)
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.6</a> on Wed Aug 18 2021 22:36:30 GMT-0400 (Eastern Daylight Time)
 </footer>
 
 <script> prettyPrint(); </script>

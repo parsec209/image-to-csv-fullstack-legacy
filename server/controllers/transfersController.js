@@ -12,9 +12,8 @@ module.exports = {
     const user = req.user
     const files = req.files
     const fileBatchID = uuidv4()
-    const IPAddress = req.ip
     try {
-      const uploader = new Uploader(user, IPAddress, fileBatchID, files) 
+      const uploader = new Uploader(user, fileBatchID, files) 
       await uploader.checkFileFormats()
       await uploader.uploadToCloud()
       return res.json(fileBatchID)
@@ -26,10 +25,9 @@ module.exports = {
 
   getData: async (req, res, next) => {
     const user = req.user
-    const IPAddress = req.ip
     const { fileBatchID, pageSelections, dateToday } = req.body
     try {
-      const csvGenerator = new CSVGenerator(user, IPAddress, fileBatchID, pageSelections, dateToday)
+      const csvGenerator = new CSVGenerator(user, fileBatchID, pageSelections, dateToday)
       const status = await csvGenerator.compileData()
       return res.json(status)
     } catch (err) {
@@ -41,9 +39,8 @@ module.exports = {
   getZip: async (req, res, next) => {
     const fileBatchID = req.body.fileBatchID
     const user = req.user
-    const IPAddress = req.ip
     try {
-      const zipWriter = new ZipWriter(user, IPAddress, fileBatchID)
+      const zipWriter = new ZipWriter(user, fileBatchID)
       await zipWriter.createZip()
       const zipURL = await zipWriter.getURL()
       return res.json(zipURL)

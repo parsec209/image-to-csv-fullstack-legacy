@@ -15,6 +15,11 @@ const cellSectSchema = new mongoose.Schema({
     default: 1,
     validate: [util.phraseCountIsInteger]   
   },
+  stringType: {
+    type: String,
+    enum: ['phrase', 'word'],
+    default: 'phrase'
+  },
   phraseOrValue: {
     type: String,
     max: 100,    

@@ -21,14 +21,12 @@ class Uploader {
   /**
    * Create an uploader
    * @param {User} user - User info
-   * @param {string} IPAddress - Client's IP address
    * @param {string} fileBatchID - Batch ID for files
    * @param {Array<LocalFile>} files - Batch of files to be uploaded
    */
-  constructor (user, IPAddress, fileBatchID, files) {
-    validateArgs(['{username: String,  _id: {toHexString: Function, ...}, ...}', 'String', 'String', '[{buffer: Uint8Array, originalname: String, mimetype: String, ...}]'], arguments)
+  constructor (user, fileBatchID, files) {
+    validateArgs(['{username: String,  _id: {toHexString: Function, ...}, ...}', 'String', '[{buffer: Uint8Array, originalname: String, mimetype: String, ...}]'], arguments)
     this.user = user
-    this.IPAddress = IPAddress
     this.fileBatchID = fileBatchID
     this.files = files
   }

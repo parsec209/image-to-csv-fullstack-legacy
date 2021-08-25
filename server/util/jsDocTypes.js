@@ -35,7 +35,7 @@
 
 
 /**
- * Text extraction for all doc pages along with filename   
+ * Text extraction of all doc pages along with filename   
  * @typedef {Object} DocText
  * @property {string} fileName - Original filename of extracted doc
  * @property {Array<AnnotateImageResponse>} extraction - Array of all the doc's extracted pages
@@ -43,64 +43,28 @@
 
 
 /**
- * Paragraph object created from text extraction. See {@link https://cloud.google.com/vision/docs/reference/rest/v1/AnnotateImageResponse#Paragraph}
- * @typedef {Object} Paragraph
+ * Word object from {@link AnnotateImageResponse}. See {@link https://cloud.google.com/vision/docs/reference/rest/v1/AnnotateImageResponse#Word}
+ * @typedef {Object} AnnotateImageResponseWord 
+ */
+
+ 
+/**
+ * List of {@link AnnotateImageResponseWord}s for each doc page, along with filename
+ * @typedef {Object} WordList 
+ * @property {string} fileName - Original filename of extracted doc
+ * @property {Array<Array<AnnotateImageResponseWord>>} words - Two dimensional array of the doc's words, grouped by page
  */
 
 
 /**
- * Word object created from text extraction. See {@link https://cloud.google.com/vision/docs/reference/rest/v1/AnnotateImageResponse#Word}
- * @typedef {Object} ParagraphWord 
+ * Anchor phrase indeces
+ * @typedef {Object} AnchorPhraseIndeces
+ * @property {number} pageIndex - doc index of the page containing the anchor phrase
+ * @property {number} startWordIndex - page index of the first word containing the anchor phrase
+ * @property {number} startSymbolIndex - word index of the first symbol containing the anchor phrase
+ * @property {number} endWordIndex - page index of the last word containing the anchor phrase
+ * @property {number} endSymbolIndex - word index of the last symbol containing the anchor phrase
  */
-
-
-/**
- * Word within a {@link Line}. Borrows some properties from {@link ParagraphWord}, along with having its own properties. 
- * @typedef {Object} LineWord
- * @property {string} wordText - same symbols (text) from {@link ParagraphWord}
- * @property {Array<{x: number, y: number}>} vertices - same vertices from {@link ParagraphWord}
- * @property {number} startIndex - index of {@link LineText} where wordText begins 
- * @property {number} endIndex - index of {@link LineText} where wordText ends 
- */
-
-
-/**
- * Vertices within a {@link Line}. Uses the outermost vertices (lowest, highest, leftmost, rightmost) found within its {@link LineWord}s
- * @typedef {Object} LineVertices
- * @property {number} xUpperLeft - upper left x coordinate
- * @property {number} yUpperLeft - upper left y coordinate
- * @property {number} xLowerRight - lower right x coordinate
- * @property {number} yLowerRight - lower right y coordinate
- */
-
-
-/**
- * Text within a {@link Line}. Combines the text from each {@link LineWord} into a single string.
- * @typedef {string} LineText
- */
-
-
- /**
-  * Represents a single line of words from a {@link Paragraph}; the words have additional properties added to them, creating {@link LineWord}s
-  * @typedef {Object} Line
-  * @property {Array<LineWord>} words - The line's words
-  * @property {LineVertices} vertices - The line's vertices
-  * @property {LineText} text - Combined text from line's words
-  */
-
-
- /**
-  * All lines within a doc page
-  * @typedef {Array<Line>} PageLines
-  */
-
-
- /**
-  * All lines within a doc
-  * @typedef {Object} DocLines
-  * @property {string} fileName - Original filename of extracted doc
-  * @property {Array<PageLines>} textLines - Array of {@link PageLines}
-  */
 
 
 /**
@@ -126,6 +90,7 @@
   * @property {Array<Object>} CSVDataRows - Data rows
   */
 
+ 
  /**
   * Object used to write CSV file
   * @typedef {Object} consolidatedBlueprint

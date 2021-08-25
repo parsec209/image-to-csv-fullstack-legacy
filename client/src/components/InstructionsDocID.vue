@@ -8,10 +8,11 @@
       <br>
       <br>
       The ID phrase you use must be a single line of text found in the document consisting of characters (letters, numbers, symbols) no more than one space apart from each other.
-      A phrase ends the moment it is followed by two or more spaces, or a line/page break. <i>Note that what counts as a single space between text in an image file is not 
-      an exact science; however, you and the application will usually be in agreement. If it looks like a phrase, per the rules just mentioned, it's probably a phrase. 
-      And make sure to type the phrase into the form exactly as it appears in the document!</i> The phrase can come from any page of the document you decide to scan, 
-      and it can even be a subset of a larger phrase (i.e. you see a phrase "Good afternoon!" in the document and decide to use "ood afternoo" as your ID phrase).  
+      A phrase ends the moment it is followed by two or more spaces, or a line/page break. <i>Note that occasionally the application may not agree with you on what counts 
+      as a single space in an image file; however, the vast majority of the time, it will. If it looks like a phrase, per the rules just mentioned, the application
+      will almost always detect it as a phrase.</i> And make sure to type the phrase into the form exactly as it appears in the document! (i.e. single spaces in between
+      words, when they exist). The phrase can come from any page of the document you decide to scan, 
+      and it can even be a subset of a larger phrase (i.e. if you see a phrase "Good afternoon!" in the document, it is fine to use "ood afternoo" as your ID phrase).  
     </p>
     <div>
       <p><strong>Example:</strong></p>

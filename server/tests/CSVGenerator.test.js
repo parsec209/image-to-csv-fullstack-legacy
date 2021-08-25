@@ -55,9 +55,8 @@ afterAll(async () => {
 describe('instantiating CSVGenerator', () => {
   test('initializes constructor', async () => {
     const user = await getUser()
-    const csvGenerator = new CSVGenerator(user, uuidv4(), uuidv4(), [1], '2020/01/20')
+    const csvGenerator = new CSVGenerator(user, uuidv4(), [1], '2020/01/20')
     expect(csvGenerator.user).toBeTruthy()
-    expect(csvGenerator.IPAddress).toBeTruthy()
     expect(csvGenerator.fileBatchID).toBeTruthy()
     expect(csvGenerator.pageSelections).toBeTruthy()
     expect(csvGenerator.dateToday).toBeTruthy()
@@ -72,7 +71,7 @@ describe('identifying doc text using recurringDoc ID phrase', () => {
 
   const initCSVGenerator = async () => { 
     const user = await getUser()
-    return new CSVGenerator(user, uuidv4(), uuidv4(), [1], '2020/01/20')
+    return new CSVGenerator(user, uuidv4(), [1], '2020/01/20')
   }
 
   beforeAll(async () => {
@@ -148,7 +147,7 @@ describe('generating data from uploads, starting with text extraction and ending
     }
     await bucket.upload(__dirname + '/seeds/uploads/cloud/validExts/blankFile.tiff', options1)
     await bucket.upload(__dirname + '/seeds/uploads/cloud/validExts/TIF.tif', options2)
-    const csvGenerator = new CSVGenerator(user, uuidv4(), fileBatchID, [1], '2020/01/20')
+    const csvGenerator = new CSVGenerator(user, fileBatchID, [1], '2020/01/20')
     const successStatus = await csvGenerator.compileData()
     const expected = {
       identifiedDocs: [],
@@ -184,7 +183,7 @@ describe('generating data from uploads, starting with text extraction and ending
     await bucket.upload(__dirname + '/seeds/uploads/cloud/validExts/PDF_editable.pdf', options1)
     await bucket.upload(__dirname + '/seeds/uploads/cloud/validExts/TIF.tif', options2)
     await bucket.upload(__dirname + '/seeds/uploads/cloud/validExts/GIF.GIF', options3)
-    const csvGenerator = new CSVGenerator(user, uuidv4(), fileBatchID, [1, 2, 3], '2020/01/20')
+    const csvGenerator = new CSVGenerator(user, fileBatchID, [1, 2, 3], '2020/01/20')
     const successStatus = await csvGenerator.compileData()
     const expected = {
       identifiedDocs: ['PDF_editable.pdf', 'GIF.GIF'],
@@ -199,7 +198,7 @@ describe('generating data from uploads, starting with text extraction and ending
     const userID = user._id
     await getRecurringDocs(userID)
     const fileBatchID = 'wrongBatchID'
-    const csvGenerator = new CSVGenerator(user, uuidv4(), fileBatchID, [1, 2, 3], '2020/01/20')
+    const csvGenerator = new CSVGenerator(user, fileBatchID, [1, 2, 3], '2020/01/20')
     const successStatus = await csvGenerator.compileData()
     const expected = {
       identifiedDocs: [],

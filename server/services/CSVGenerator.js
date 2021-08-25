@@ -7,7 +7,7 @@ const {Storage} = require('@google-cloud/storage')
 const storage = new Storage()
 const bucket = storage.bucket(process.env.STORAGE_BUCKET)
 const TextExtractor = require('./TextExtractor')
-const TextLineGenerator = require('./TextLineGenerator')
+const WordListGenerator = require('./WordListGenerator')
 const CellValueGenerator = require('./CellValueGenerator')
 const CSVWriter = require('./CSVWriter')
 const PostService = require('./PostService')
@@ -26,15 +26,13 @@ class CSVGenerator {
   /**
    * Create csvGenerator 
    * @param {User} user - User info
-   * @param {string} IPAddress - Client's IP address
    * @param {string} fileBatchID - Batch ID for files
    * @param {Array<number>} pageSelections - Page numbers to scan for this file batch
    * @param {string} dateToday - Today's date
    */
-  constructor (user, IPAddress, fileBatchID, pageSelections, dateToday) {
-    validateArgs(['{username: String,  _id: {toHexString: Function, ...}, ...}', 'String', 'String', '[Number]', 'String'], arguments)
+  constructor (user, fileBatchID, pageSelections, dateToday) {
+    validateArgs(['{username: String,  _id: {toHexString: Function, ...}, ...}', 'String', '[Number]', 'String'], arguments)
     this.user = user
-    this.IPAddress = IPAddress
     this.fileBatchID = fileBatchID
     this.pageSelections = pageSelections
     this.dateToday = dateToday
@@ -97,10 +95,10 @@ class CSVGenerator {
     const CSVBlueprints = matchedDocsText.map(matchedDocText => {
       const docText = docsText.find(docText => docText.fileName === matchedDocText)
       const recurringDoc = matchedRecurringDocs.find(matchedRecurringDoc => matchedRecurringDoc.fileName === matchedDocText).recurringDoc
-      const textLineGenerator = new TextLineGenerator(docText)
-      const docTextLines = textLineGenerator.getDocLines()
-      textLineGenerator.sortDocLines(docTextLines) 
-      const cellValueGenerator = new CellValueGenerator(docText, docTextLines, recurringDoc, self.dateToday)
+      const wordListGenerator = new WordListGenerator(docText)
+      const wordList = wordListGenerator.getWordList()
+      wordListGenerator.sortWordList(wordList) 
+      const cellValueGenerator = new CellValueGenerator(docText, wordList, recurringDoc, self.dateToday)
       const CSVBlueprint = cellValueGenerator.getCSVBlueprint()
       return CSVBlueprint
     })

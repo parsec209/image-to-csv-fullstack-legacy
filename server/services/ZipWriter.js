@@ -20,13 +20,11 @@ class ZipWriter {
   /**
    * Create a zipWriter
    * @param {User} user - User info
-   * @param {string} IPAddress - Client's IP address
    * @param {string} fileBatchID - Batch ID for files
    */
-  constructor (user, IPAddress, fileBatchID) {
-    validateArgs(['{username: String,  _id: {toHexString: Function, ...}, ...}', 'String', 'String'], arguments)    
+  constructor (user, fileBatchID) {
+    validateArgs(['{username: String,  _id: {toHexString: Function, ...}, ...}', 'String'], arguments)    
     this.user = user
-    this.IPAddress = IPAddress
     this.fileBatchID = fileBatchID
   }
 

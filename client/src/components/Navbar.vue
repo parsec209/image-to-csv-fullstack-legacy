@@ -5,7 +5,6 @@
       <b-navbar-toggle target="nav-collapse"></b-navbar-toggle>
       <b-collapse id="nav-collapse" is-nav>
         <b-navbar-nav>
-          <b-nav-item to="/demo">Demo</b-nav-item>
           <b-nav-item to="/instructions">Instructions</b-nav-item>
         </b-navbar-nav>
         <b-navbar-nav v-if="user" class="ml-auto">

@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: services/WordListGenerator.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: services/WordListGenerator.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/**
+ * WordListGenerator module - see {@tutorial WordListGenerator-tutorial}
+ * @module WordListGenerator
+ */
+
+const { validateArgs } = require('../util/ArgsValidator')
+
+// @ts-check
+ 
+ 
+/**
+ * Class to create wordListGenerator object
+ */
+class WordListGenerator {
+  /**
+   * Creates wordListGenerator
+   * @param {DocText} docText - Doc text used in the word list generation
+   */
+  constructor (docText) {
+    validateArgs(['{fileName: String, extraction: Array}'], arguments)
+    this.docText = docText
+  }
+
+ 
+  /**
+   * Compiles a list of all the words within a doc
+   * @returns {WordList} - Word list 
+   */
+  getWordList() {
+    const docWords = []
+    this.docText.extraction.forEach(function(docPage) {
+      const pageWords = []
+      //fullTextAnnotation property is null for page with no text
+      if (docPage.fullTextAnnotation) {
+        //the pages property in the fullTextAnnotation API response will always have length of 1, it is not to be confused with the actual doc pages
+        docPage.fullTextAnnotation.pages.forEach(function(page) {
+          page.blocks.forEach(function(block) {
+            block.paragraphs.forEach(function(paragraph) {
+              paragraph.words.forEach(function(word) {
+                pageWords.push(word)
+              })       
+            })
+          })
+        })
+      }
+      docWords.push(pageWords)
+    })
+    return { fileName: this.docText.fileName, words: docWords }
+  }
+
+  
+  /**
+   * Sorts words in the word list, using their coordinates
+   * @param {WordList} wordList - Word list
+   * @returns {void}
+   */
+  sortWordList(wordList) {
+    validateArgs(['{fileName: String, words: [Array]}'], arguments)
+    wordList.words.forEach(function(page) {
+      if (page.length) {
+        page.sort(function(a, b) {    
+          let vertexType = a.boundingBox.vertices.length ? 'vertices' : 'normalizedVertices'
+
+          //if word A's bottom y coordinate is less than the vertical midpoint of word B, word A is sorted before word B
+          if (a.boundingBox[vertexType][2].y &lt; (b.boundingBox[vertexType][0].y + b.boundingBox[vertexType][2].y)/2) {
+            return -1
+
+            //if word A's vertical midpoint is greater than the bottom y coordinate of word B, word A is sorted after word B
+          } else if ((a.boundingBox[vertexType][0].y + a.boundingBox[vertexType][2].y)/2 > b.boundingBox[vertexType][2].y) {
+            return 1
+
+            //if neither of the preceding statements is true, then the word with the lesser left x coordinate gets sorted first
+          } else {
+            return 0 || a.boundingBox[vertexType][0].x - b.boundingBox[vertexType][0].x
+          }
+        })
+      }
+    })
+  }
+}
+
+ 
+module.exports = WordListGenerator
+ 
+ 
+ 
+ </code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Img-To-CSV Services</a></h2><h3>Modules</h3><ul><li><a href="module-CellValueGenerator.html">CellValueGenerator</a></li><li><a href="module-CSVGenerator.html">CSVGenerator</a></li><li><a href="module-CSVWriter.html">CSVWriter</a></li><li><a href="module-PasswordReset.html">PasswordReset</a></li><li><a href="module-PostService.html">PostService</a></li><li><a href="module-TextExtractor.html">TextExtractor</a></li><li><a href="module-Uploader.html">Uploader</a></li><li><a href="module-WordListGenerator.html">WordListGenerator</a></li><li><a href="module-ZipWriter.html">ZipWriter</a></li></ul><h3>Classes</h3><ul><li><a href="module-CellValueGenerator-CellValueGenerator.html">CellValueGenerator</a></li><li><a href="module-CSVGenerator-CSVGenerator.html">CSVGenerator</a></li><li><a href="module-CSVWriter-CSVWriter.html">CSVWriter</a></li><li><a href="module-PostService-PostService.html">PostService</a></li><li><a href="module-TextExtractor-TextExtractor.html">TextExtractor</a></li><li><a href="module-Uploader-Uploader.html">Uploader</a></li><li><a href="module-WordListGenerator-WordListGenerator.html">WordListGenerator</a></li><li><a href="module-ZipWriter-ZipWriter.html">ZipWriter</a></li></ul><h3>Tutorials</h3><ul><li><a href="tutorial-CellValueGenerator-tutorial.html">CellValueGenerator</a></li><li><a href="tutorial-CSVGenerator-tutorial.html">CSVGenerator</a></li><li><a href="tutorial-WordListGenerator-tutorial.html">WordListGenerator</a></li></ul><h3><a href="global.html">Global</a></h3>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.6</a> on Wed Aug 18 2021 22:36:30 GMT-0400 (Eastern Daylight Time)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

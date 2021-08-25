@@ -27,9 +27,9 @@
       <li>Compile an array of CSV data blueprints. For each filename in the matchedDocsText array:
         <ul>
           <li>Retrieve its associated docText, and the recurring doc containing the matching ID phrase</li>
-          <li>Generate text lines ("docTextLines") from the docText</li>
-          <li>Sort the docTextLines</li>
-          <li>Using the docText, docTextLines, and recurring doc as inputs, create a cellValueGenerator instance to compile all the cell values for the future CSV file.
+          <li>Generate wordList from the docText</li>
+          <li>Sort wordList by the words' coordinates</li>
+          <li>Using the docText, wordList, and recurring doc as inputs, create a cellValueGenerator instance to compile all the cell values for the future CSV file.
               <br>
               The recurring doc will contain rules (created earlier by the user) on what values to look for in the text, and how to obtain them, for every CSV cell. 
           </li>

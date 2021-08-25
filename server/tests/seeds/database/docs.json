@@ -257,7 +257,6 @@
           },
           {
             "searchOrInputMethod": "topPhrase", 
-            "phraseCount": 9,
             "phraseOrValue": "01/01/2000" 
           },
           {
@@ -285,6 +284,119 @@
         ]}
       ]}
     ]
+  },
+
+
+  {
+    "name": "GIF.GIF--cellValue_test",
+    "idPhrase": "[Street Address]",
+    "header": [
+      { "value" : "1" },
+      { "value" : "2" },
+      { "value" : "3" },
+      { "value" : "4" }
+    ],
+    "dataRows": [
+      { "dataCells": [ 
+        { "cellSects": [  
+          {
+            "searchOrInputMethod": "leftPhrase",
+            "stringType": "word",
+            "phraseOrValue": "Pho"
+          },
+          {
+            "searchOrInputMethod": "leftPhrase",
+            "stringType": "word",
+            "phraseOrValue": "Phone:"
+          },
+          {
+            "searchOrInputMethod": "leftPhrase",
+            "phraseCount": 5,
+            "stringType": "word",
+            "phraseOrValue": "(000)"
+          },
+          {
+            "searchOrInputMethod": "leftPhrase",
+            "phraseCount": 4,
+            "stringType": "word",
+            "phraseOrValue": "TAX RATE"
+          }
+        ]},
+        { "cellSects": [  
+          {
+            "searchOrInputMethod": "leftPhrase",
+            "stringType": "phrase",
+            "phraseOrValue": "Phone: ("
+          },
+          {
+            "searchOrInputMethod": "leftPhrase",
+            "stringType": "phrase",
+            "phraseOrValue": "BILL TO"
+          },
+          {
+            "searchOrInputMethod": "leftPhrase",
+            "phraseCount": 4,
+            "stringType": "phrase",
+            "phraseOrValue": "Labor:"
+          },
+          {
+            "searchOrInputMethod": "leftPhrase",
+            "phraseCount": 6,
+            "stringType": "phrase",
+            "phraseOrValue": "SUBTOTAL"
+          }
+        ]},
+        { "cellSects": [  
+          {
+            "searchOrInputMethod": "topPhrase",
+            "stringType": "word",
+            "phraseOrValue": "ST"
+          },
+          {
+            "searchOrInputMethod": "topPhrase",
+            "phraseCount": 2,
+            "stringType": "word",
+            "phraseOrValue": "IPTIO"
+          },
+          {
+            "searchOrInputMethod": "topPhrase",
+            "phraseCount": 1,
+            "stringType": "word",
+            "phraseOrValue": "ATE"
+          },
+          {
+            "searchOrInputMethod": "topPhrase",
+            "phraseCount": 2,
+            "stringType": "word",
+            "phraseOrValue": "ddress]"
+          }
+        ]},
+        { "cellSects": [  
+          {
+            "searchOrInputMethod": "topPhrase",
+            "phraseCount": 2,
+            "stringType": "phrase",
+            "phraseOrValue": "ddress"
+          },
+          {
+            "searchOrInputMethod": "topPhrase",
+            "stringType": "phrase",
+            "phraseOrValue": "DATE"
+          },
+          {
+            "searchOrInputMethod": "topPhrase",
+            "phraseCount": 3,
+            "stringType": "phrase",
+            "phraseOrValue": "INVOICE #"
+          },
+          {
+            "searchOrInputMethod": "topPhrase",
+            "phraseCount": 3,
+            "stringType": "phrase",
+            "phraseOrValue": "Name]"
+          }
+        ]}
+      ]}
+    ]
   }
 ]
-

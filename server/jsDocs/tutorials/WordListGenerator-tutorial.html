@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WordListGenerator</title>
+</head>
+<body>
+    <p>
+      This <a href="https://cloud.google.com/vision/docs/reference/rest/v1/AnnotateImageResponse#TextAnnotation">link</a> shows the object hierarchy that the GCP Vision API
+      generates from a page's extracted text (Page-Block-Paragraph-Word-Symbol). This works well with documents that mainly contain natural language and predictable
+      layout of text (i.e. paragraphs, etc.) However, with a document such as an invoice, the text layout on the page is not only less predictable, but special characters, 
+      letters, and numbers are often combined together in ways not normally seen in natural language. Therefore, this application takes an extra step to create an  
+      array of all the document's words generated from the GCP output and sorts these words based on their vertices, in a left to right, line by line, order. This is the same 
+      order a human would read lines of text on a page. The final result will be a 2D array of the entire doc (outer array) with each doc page (inner arrays) containing 
+      the GCP word objects. This predictable word order makes it easier to locate metadata in relation to a specified text phrase ("anchor phrases").
+    </p>
+</body>
+</html>

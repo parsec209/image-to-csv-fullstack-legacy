@@ -65,9 +65,8 @@ afterAll(async () => {
 describe('instantiating Uploader', () => {
   test('initializes constructor', async () => {
     const user = await getUser()
-    const uploader = new Uploader(user, uuidv4(), uuidv4(), reqFiles.valid)
+    const uploader = new Uploader(user, uuidv4(), reqFiles.valid)
     expect(uploader.user).toBeTruthy()
-    expect(uploader.IPAddress).toBeTruthy()
     expect(uploader.fileBatchID).toBeTruthy()
     expect(uploader.files).toBeTruthy()
   })
@@ -77,12 +76,12 @@ describe('instantiating Uploader', () => {
 describe('validating file formats', () => {
   test('accepts valid formats', async () => {
     const user = await getUser()
-    const uploader = new Uploader(user, uuidv4(), uuidv4(), reqFiles.valid)
+    const uploader = new Uploader(user, uuidv4(), reqFiles.valid)
     await expect(uploader.checkFileFormats()).resolves.not.toThrow()
   })
   test('rejects invalid formats', async () => {
     const user = await getUser()
-    const uploader = new Uploader(user, uuidv4(), uuidv4(), reqFiles.invalid)
+    const uploader = new Uploader(user, uuidv4(), reqFiles.invalid)
     await expect(uploader.checkFileFormats()).rejects.toThrow('File format not supported. Accepted file formats: pdf, gif, tif')
   })
 })
@@ -91,7 +90,7 @@ describe('validating file formats', () => {
 describe('uploading files to GCP', () => {
   test('streams buffers to storage bucket', async () => {
     const user = await getUser()
-    const uploader = new Uploader(user, uuidv4(), uuidv4(), reqFiles.valid)
+    const uploader = new Uploader(user, uuidv4(), reqFiles.valid)
     const filesAreInCloud = (files) => {
       return Promise.all(files.map(async file => {
         const cloudFile = bucket.file(`${uploader.user._id}/uploads/${uploader.fileBatchID}/${file.originalname}`)

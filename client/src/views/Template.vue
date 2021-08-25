@@ -134,36 +134,36 @@
                   <b-button variant="link" size="sm" @click="deleteCellSect(rowIndex, cellIndex)">Delete Section</b-button> 
                   <div v-for="(cellSect, sectIndex) in dataCell.cellSects.$each.$iter" :key="sectIndex">
                     <b-button variant="outline-info" v-b-modal="`modal-${rowIndex}-${cellIndex}-${sectIndex}`">
-                      Sect#{{ parseInt(sectIndex, 10) + 1 }}-{{ cellSect.searchOrInputMethod.$model }}-{{ cellSect.phraseOrValue.$model }}
+                      Sect#{{ parseInt(sectIndex, 10) + 1 }}-{{ getSearchMethodDisplay(cellSect.searchOrInputMethod.$model) }}-{{ cellSect.phraseOrValue.$model }}
                     </b-button>  
-                    <b-modal :id="`modal-${rowIndex}-${cellIndex}-${sectIndex}`" title="Cell section value rules">       
-                      <p><strong>Text search and input methods</strong></p>
+                    <b-modal :id="`modal-${rowIndex}-${cellIndex}-${sectIndex}`" title="Cell section value retrieval rules">       
+                      <p><strong>String search methods</strong></p>
                       <b-form-group v-slot="{ searchOrInputMethods }">
                         <b-form-radio v-model="cellSect.searchOrInputMethod.$model" :aria-describedby="searchOrInputMethods" value="leftPhrase">
-                          Left anchor phrase
+                          Anchor phrase - horizontal search
                           <b-badge variant="secondary" href="#" id="leftPhrase-tip">
                             <b-icon icon="question-circle-fill" aria-label="leftPhrase-tip"></b-icon>
                           </b-badge>
                           <b-popover target="leftPhrase-tip" triggers="hover focus">
-                            <InstructionsLeftPhrase/>        
+                            <InstructionsAnchorHoriz/>        
                           </b-popover>
                         </b-form-radio>
                         <b-form-radio v-model="cellSect.searchOrInputMethod.$model" :aria-describedby="searchOrInputMethods" value="topPhrase">
-                          Top anchor phrase
+                          Anchor phrase - vertical search
                           <b-badge variant="secondary" href="#" id="topPhrase-tip">
                             <b-icon icon="question-circle-fill" aria-label="topPhrase-tip"></b-icon>
                           </b-badge>
                           <b-popover target="topPhrase-tip" triggers="hover focus">
-                            <InstructionsTopPhrase/>        
+                            <InstructionsAnchorVert/>        
                           </b-popover>
                         </b-form-radio>                              
                         <b-form-radio v-model="cellSect.searchOrInputMethod.$model" :aria-describedby="searchOrInputMethods" value="pattern">
-                          Text pattern
+                          Regular expression
                           <b-badge variant="secondary" href="#" id="textPattern-tip">
                             <b-icon icon="question-circle-fill" aria-label="textPattern-tip"></b-icon>
                           </b-badge>
                           <b-popover target="textPattern-tip" triggers="hover focus">
-                            <InstructionsTextPattern/>        
+                            <InstructionsRegExp/>        
                           </b-popover>
                         </b-form-radio>
                         <b-form-radio v-model="cellSect.searchOrInputMethod.$model" :aria-describedby="searchOrInputMethods" value="customValue">
@@ -196,18 +196,18 @@
                       </b-form-group>                   
                       <br>
                       <label for="phraseOrValue-input">
-                        <strong>Search phrase or literal value </strong>
+                        <strong>Search string </strong>
                         <b-badge variant="secondary" href="#" id="phraseOrValue-tip">
                           <b-icon icon="question-circle-fill" aria-label="phraseOrValue-tip"></b-icon>
                         </b-badge>
                         <b-popover target="phraseOrValue-tip" triggers="hover focus">
-                          <InstructionsPhraseOrValue/>
+                          <InstructionsSearchString/>
                         </b-popover>
                       </label>             
                       <b-form-group>
                         <b-form-input 
                           id="phraseOrValue-input"
-                          placeholder="Enter phrase or value" 
+                          placeholder="Enter anchor phrase, regex, or custom value" 
                           v-model="cellSect.phraseOrValue.$model" 
                           :state="validateState(cellSect.phraseOrValue)" 
                           aria-describedby="phraseOrValue-live-feedback"
@@ -216,15 +216,33 @@
                         </b-form-input>
                         <b-form-invalid-feedback id="phraseOrValue-live-feedback">Please enter phrase or value</b-form-invalid-feedback>
                       </b-form-group>
+                      <br>             
+                      <p>
+                        <strong>String retrieval type </strong>
+                        <b-badge variant="secondary" href="#" id="stringRetrievalType-tip">
+                          <b-icon icon="question-circle-fill" aria-label="stringRetrievalType-tip"></b-icon>
+                        </b-badge>
+                        <b-popover target="stringRetrievalType-tip" triggers="hover focus">
+                          <InstructionsStringRetrievalType/>
+                        </b-popover>
+                      </p>             
+                      <b-form-group v-slot="{ stringTypes }">
+                        <b-form-radio v-model="cellSect.stringType.$model" :aria-describedby="stringTypes" value="phrase" :disabled="!cellSect.searchOrInputMethod.$model">
+                          Phrase
+                        </b-form-radio>
+                        <b-form-radio v-model="cellSect.stringType.$model" :aria-describedby="stringTypes" value="word" :disabled="!cellSect.searchOrInputMethod.$model">
+                          Word
+                        </b-form-radio>                                                                     
+                      </b-form-group>   
                       <br>
                       <div>
                         <label for="sb-inline-phraseCount">
-                          (Optional)<strong> Add phrase count (1-99) </strong>
+                          <strong> String count (1-99) </strong>
                           <b-badge variant="secondary" href="#" id="addPhraseCount-tip">
                             <b-icon icon="question-circle-fill" aria-label="addPhraseCount-tip"></b-icon>
                           </b-badge>
                           <b-popover target="addPhraseCount-tip" triggers="hover focus">
-                            <InstructionsAddPhraseCount/>
+                            <InstructionsStringCount/>
                           </b-popover>
                         </label>
                         <br>
@@ -239,6 +257,7 @@
                         >
                         </b-form-spinbutton>
                       </div>
+                      <br>
                       <br>
                       <label for="appendChars-input">
                         (Optional)<strong> Append characters </strong>
@@ -306,6 +325,7 @@
                         </b-form-spinbutton>
                         <br>
                         <br>
+                        <br>
                         <b-form-textarea
                           v-model="cellSect.notes.$model"
                           placeholder="Enter notes..."
@@ -339,14 +359,15 @@ import InstructionsDocID from '../components/InstructionsDocID.vue'
 import InstructionsHeaders from '../components/InstructionsHeaders.vue'
 import InstructionsHeaderCells from '../components/InstructionsHeaderCells.vue'
 import InstructionsDataCells from '../components/InstructionsDataCells.vue'
-import InstructionsLeftPhrase from '../components/InstructionsLeftPhrase.vue'
-import InstructionsTopPhrase from '../components/InstructionsTopPhrase.vue'
-import InstructionsTextPattern from '../components/InstructionsTextPattern.vue'
+import InstructionsAnchorHoriz from '../components/InstructionsAnchorHoriz.vue'
+import InstructionsAnchorVert from '../components/InstructionsAnchorVert.vue'
+import InstructionsRegExp from '../components/InstructionsRegExp.vue'
 import InstructionsCustomValue from '../components/InstructionsCustomValue.vue'
 import InstructionsTodayDate from '../components/InstructionsTodayDate.vue'
 import InstructionsEmptySect from '../components/InstructionsEmptySect.vue'
-import InstructionsPhraseOrValue from '../components/InstructionsPhraseOrValue.vue'
-import InstructionsAddPhraseCount from '../components/InstructionsAddPhraseCount.vue'
+import InstructionsSearchString from '../components/InstructionsSearchString.vue'
+import InstructionsStringRetrievalType from '../components/InstructionsStringRetrievalType.vue'
+import InstructionsStringCount from '../components/InstructionsStringCount.vue'
 import InstructionsAppendChars from '../components/InstructionsAppendChars.vue'
 import InstructionsFormatDate from '../components/InstructionsFormatDate.vue'
 import InstructionsAddDays from '../components/InstructionsAddDays.vue'
@@ -364,14 +385,15 @@ export default {
     InstructionsHeaders,
     InstructionsHeaderCells,
     InstructionsDataCells,
-    InstructionsLeftPhrase,
-    InstructionsTopPhrase,
-    InstructionsTextPattern,
+    InstructionsAnchorHoriz,
+    InstructionsAnchorVert,
+    InstructionsRegExp,
     InstructionsCustomValue,
     InstructionsTodayDate,
     InstructionsEmptySect,
-    InstructionsPhraseOrValue,
-    InstructionsAddPhraseCount,
+    InstructionsSearchString,
+    InstructionsStringRetrievalType,
+    InstructionsStringCount,
     InstructionsAppendChars,
     InstructionsFormatDate,
     InstructionsAddDays
@@ -427,6 +449,7 @@ export default {
                     required: requiredIf(notEmptyValueOrToday)
                   },
                   phraseCount: {},
+                  stringType: {},
                   appendChars: {},
                   dateFormat: {
                     areValidDateChars
@@ -490,7 +513,22 @@ export default {
       this.headerCellErrors = []
       this.dataCellErrors = []
     },
-    
+
+    //Displays the selected search string method in the table's cell sections
+    getSearchMethodDisplay(method) {
+      let methodDisplay
+      if (method === 'topPhrase') {
+        methodDisplay = 'anchorVert'
+      } else if (method === 'leftPhrase') {
+        methodDisplay = 'anchorHoriz'
+      } else if (method === 'pattern') {
+        methodDisplay = 'regExp'
+      } else {
+        methodDisplay = method
+      }
+      return methodDisplay
+    },
+
 
     //TABLE METHODS
 
@@ -556,6 +594,7 @@ export default {
         searchOrInputMethod: '', 
         phraseOrValue: '',  
         phraseCount: 1,  
+        stringType: 'phrase',  
         appendChars: '',
         dateFormat: '',
         daysAdded: 0,
@@ -587,6 +626,7 @@ export default {
       if (!sect.searchOrInputMethod.$model) {
         sect.phraseOrValue.$model = ''
         sect.phraseCount.$model = 1
+        sect.stringType.$model = 'phrase'
         sect.appendChars.$model = ''
         sect.dateFormat.$model = ''
         sect.daysAdded.$model = 0
@@ -711,6 +751,7 @@ export default {
         searchOrInputMethod: '', 
         phraseOrValue: '',  
         phraseCount: 1,  
+        stringType: 'phrase',
         appendChars: '',
         dateFormat: '',
         daysAdded: 0,

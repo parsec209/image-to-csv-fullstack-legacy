@@ -9,7 +9,7 @@
           <h1>Image-To-CSV</h1>
           <p>Generate CSV files from your recurring documents</p>
           <br>
-          <b-button variant="info" to="/demo" size="lg">View Demo</b-button>
+          <b-button variant="info" to="#" size="lg">View Demo</b-button>
           <br>
           <br>
           <b-button class="mr-1" variant="secondary" to="/register">Register</b-button>

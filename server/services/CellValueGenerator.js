@@ -5,35 +5,162 @@
 
 const moment  = require('moment')
 const { validateArgs } = require('../util/ArgsValidator')
-
+  
 // @ts-check
-
-
+  
+  
 /**
  * Class to create cellValueGenerator object
  */
 class CellValueGenerator {
   /**
    * Create cellValueGenerator 
-   * @param {DocText} docText -  Doc text
-   * @param {DocLines} docTextLines - Sorted doc text lines
+   * @param {DocText} docText - Doc text
+   * @param {WordList} wordList - Sorted word list
    * @param {Object} recurringDoc - Mongoose Doc model instance (recurring document)
    * @param {string} dateToday - Today's date 
    */
-  constructor (docText, docTextLines, recurringDoc, dateToday) {
+  constructor (docText, wordList, recurringDoc, dateToday) {
     validateArgs([
-      '{fileName: String, extraction: Array}', 
-      '{fileName: String, textLines: [Array]}', 
+      '{fileName: String, extraction: Array}',
+      '{fileName: String, words: [Array]}', 
       '{_id: Object, name: String, idPhrase: String, header: Array, dataRows: Array, user: Object, ...}', 
       'String'
     ], arguments)
     this.docText = docText
-    this.docTextLines = docTextLines
+    this.wordList = wordList
     this.recurringDoc = recurringDoc
     this.dateToday = dateToday
   }
+  
+
+  /**
+   * Determines how much space must exist between two words to define a phrase break
+   * @param {AnnotateImageResponseWord} currentWord - word from sorted word list  
+   * @param {AnnotateImageResponseWord} nextWord - immediate next word from sorted word list
+   * @returns {boolean} - true if phrase break requirement is met, false otherwise
+   */
+  isPhraseBreak(currentWord, nextWord) {
+    validateArgs(['{symbols: Array, boundingBox: Object, confidence: Number, ...}', '{symbols: Array, boundingBox: Object, confidence: Number, ...}'], arguments)
+    const currentWordVertices = currentWord.boundingBox.vertices.length ? currentWord.boundingBox.vertices : currentWord.boundingBox.normalizedVertices 
+    const nextWordVertices = nextWord.boundingBox.vertices.length ? nextWord.boundingBox.vertices : nextWord.boundingBox.normalizedVertices 
+    const currentWordEnd = currentWordVertices[1].x 
+    const nextWordStart = nextWordVertices[0].x
+    const spaceBeforeNextWord = nextWordStart - currentWordEnd 
+    const currentWordHeight = currentWordVertices[3].y - currentWordVertices[0].y
+    if (spaceBeforeNextWord < currentWordHeight) {
+      return false
+    }
+    return true
+  } 
 
 
+  /**
+   * Parses word list for indeces of anchor phrase
+   * @param {string} anchorPhrase - Anchor phrase
+   * @returns {AnchorPhraseIndeces} - Anchor phrase indeces
+   */
+  findAnchorPhrase(anchorPhrase) {
+    validateArgs(['String'], arguments)
+    let wordListIndeces = {}
+    let anchorPhraseIndex = 0
+    for (let i = 0; i < this.wordList.words.length; i++) {
+      let page = this.wordList.words[i]
+      for (let j = 0; j < page.length; j++) {
+        let word = page[j]
+        for (let k = 0; k < word.symbols.length; k++) {
+          let symbol = word.symbols[k]
+          if (symbol.text === anchorPhrase[anchorPhraseIndex]) {
+            
+            if (anchorPhraseIndex === 0) {
+              wordListIndeces = { ...wordListIndeces, pageIndex: i, startWordIndex: j, startSymbolIndex: k }
+            }
+            
+            if (anchorPhraseIndex === anchorPhrase.length - 1) {
+              wordListIndeces = { ...wordListIndeces, endWordIndex: j, endSymbolIndex: k }
+              return wordListIndeces
+            }
+
+            if (symbol.property && symbol.property.detectedBreak) {
+              if (symbol.property.detectedBreak.type === 'SPACE') {
+                let nextWord = page[j + 1]
+                if (nextWord && this.isPhraseBreak(word, nextWord)) {
+                  anchorPhraseIndex = 0
+                  wordListIndeces = {}
+                  continue
+                } else {
+                  anchorPhraseIndex += 2
+                  continue
+                }
+              } else {
+                anchorPhraseIndex = 0
+                wordListIndeces = {}
+                continue
+              }
+            }
+           
+            anchorPhraseIndex ++
+
+          } else {
+            anchorPhraseIndex = 0
+            wordListIndeces = {}
+          }
+        }
+      }
+    }
+  }
+ 
+
+  /**
+   * Gets coordinates of anchor phrase
+   * @param {AnchorPhraseIndeces} anchorPhraseIndeces - AnchorPhrase indeces
+   * @returns {Object} - Anchor phrase coords
+   */
+  getAnchorPhraseCoords(anchorPhraseIndeces) {
+    validateArgs(['{pageIndex: Number, startWordIndex: Number, ...}'], arguments)
+    const { pageIndex, startWordIndex, startSymbolIndex, endWordIndex, endSymbolIndex } = anchorPhraseIndeces
+    const page = this.wordList['words'][pageIndex]
+    const startSymbolBoundingBox = page[startWordIndex]['symbols'][startSymbolIndex]['boundingBox']
+    const vertexType = startSymbolBoundingBox.vertices.length ? 'vertices' : 'normalizedVertices'
+    const leftXCoord = startSymbolBoundingBox[vertexType][0]['x']
+    const rightXCoord = page[endWordIndex]['symbols'][endSymbolIndex]['boundingBox'][vertexType][1]['x']
+    let upperYCoord = 10000
+    let lowerYCoord = 0
+    for (let i = startWordIndex; i <= endWordIndex; i++) {
+      let word = page[i]
+      for (let j = (i === startWordIndex ? startSymbolIndex : 0); j <= (i === endWordIndex ? endSymbolIndex : word.symbols.length - 1); j++) {
+        let symbol = word.symbols[j]
+        let upperLeftYCoord = symbol['boundingBox'][vertexType][0]['y']
+        let lowerRightYCoord = symbol['boundingBox'][vertexType][2]['y']
+        if (upperLeftYCoord < upperYCoord) {
+          upperYCoord = upperLeftYCoord
+        }
+        if (lowerRightYCoord > lowerYCoord) {
+          lowerYCoord = lowerRightYCoord
+        }
+      }
+    }
+    return { leftXCoord, rightXCoord, upperYCoord, lowerYCoord }
+  }
+
+
+  /**
+   * Determines if string shares more than half of its y-coordinates with another string. If so, they are considered to be on the same line 
+   * @param {number} firstStringVerticalMidPoint - First string's vertical midpoint
+   * @param {number} nextStringLowerRightY - Next strings's lower right y-coordinate
+   * @param {number} nextStringUpperLeftY - Next string's upper left y-coordinate
+   * @returns {boolean} - Whether strings are on same line
+   */
+  stringsAreOnSameLine(firstStringVerticalMidPoint, nextStringLowerRightY, nextStringUpperLeftY) {
+    validateArgs(['Number', 'Number', 'Number'], arguments)
+    if (nextStringLowerRightY > firstStringVerticalMidPoint && nextStringUpperLeftY < firstStringVerticalMidPoint) {
+      return true 
+    } else {
+      return false
+    }
+  }
+ 
+ 
   /**
    * Formats cell section value as a date 
    * @param {string} cellSectValue - CSV cell section value
@@ -50,8 +177,8 @@ class CellValueGenerator {
     }
     return formattedDate
   }
-
-
+  
+  
   /**
    * Finds cell section value using regular expression. 
    * @param {Object} recurringDocCellSect - Recurring doc cell section 
@@ -73,62 +200,6 @@ class CellValueGenerator {
     }
     return cellSectValue
   }
-
-
-  /**
-   * Gets vertical midpoint of {@link Line}
-   * @param {number} yLowerRightVertex - Lower right y coordinate of line
-   * @param {number} yUpperLeftVertex - Upper left y coordinate of line
-   * @returns {number} - Vertical midpoint of line
-   */
-  getLineVerticalMidPoint(yLowerRightVertex, yUpperLeftVertex) {
-    validateArgs(['Number', 'Number'], arguments)
-    const verticalMidPoint = (yLowerRightVertex - yUpperLeftVertex)/2 + yUpperLeftVertex
-    return verticalMidPoint
-  }
-
-
-  /**
-   * Gets vertices of phraseOrValue
-   * @param {number} phraseOrValueStartIndex - Index of {@link LineText} where phraseOrValue begins
-   * @param {number} phraseOrValueEndIndex - Index of {@link LineText} where phraseOrValue ends
-   * @param {Line} line - Line
-   * @returns {{xUpperLeft: number, yUpperLeft: number, xLowerRight: number, yLowerRight: number }} - Vertices of phraseOrValue
-   */
-  getPhraseOrValueVertices(phraseOrValueStartIndex, phraseOrValueEndIndex, line) {
-    validateArgs(['Number', 'Number', '{words: Array, vertices: Object, text: String}'], arguments)
-    const phraseOrValueVertices = {}
-    for (let n = 0; n < line.words.length; n++) {
-      let word = line.words[n]
-      //finding the first and last words in the phraseOrValue; we will use the first word's upper left and the last word's lower right vertices as the phraseOrValue vertices
-      if (phraseOrValueStartIndex >= word.startIndex && phraseOrValueStartIndex <= word.endIndex) {
-        phraseOrValueVertices.xUpperLeft = word.vertices[0].x
-        phraseOrValueVertices.yUpperLeft = word.vertices[0].y
-      } if (phraseOrValueEndIndex >= word.startIndex && phraseOrValueEndIndex <= word.endIndex) {
-        phraseOrValueVertices.xLowerRight = word.vertices[2].x
-        phraseOrValueVertices.yLowerRight = word.vertices[2].y
-        break
-      }
-    }
-    return phraseOrValueVertices
-  }
-
-
-  /**
-   * Determines if two lines share more than half of their y-coordinates. If so, they are considered to be on the same horizontal plane 
-   * @param {number} verticalMidPointLineOne - First line's vertical midpoint
-   * @param {number} yLowerRightVertexLineTwo - Second line's lower right y-coordinate
-   * @param {number} yUpperLeftVertexLineTwo - Second line's upper left y-coordinate
-   * @returns {boolean} - Whether lines are, or are not, on same horizontal plane
-   */
-  linesAreOnSameHorizontalPlane(verticalMidPointLineOne, yLowerRightVertexLineTwo, yUpperLeftVertexLineTwo) {
-    validateArgs(['Number', 'Number', 'Number'], arguments)
-    if (yLowerRightVertexLineTwo > verticalMidPointLineOne && yUpperLeftVertexLineTwo < verticalMidPointLineOne) {
-      return true 
-    } else {
-      return false
-    }
-  }
   
   
   /**
@@ -138,61 +209,105 @@ class CellValueGenerator {
    */
   getCellSectValueFromPosition(recurringDocCellSect) {
     validateArgs(['{searchOrInputMethod: Maybe String, ...}'], arguments)
-    let cellSectValue
-    let anchorPhraseFound = false
-    let phraseCount = 0
-    let anchorPhraseStartIndex
-    let anchorPhraseEndIndex
-    let anchorPhraseVertices
-    let anchorPhraseVerticalMidPoint
-    let anchorPhrasePage
-    for (let pageIndex = 0; pageIndex < this.docTextLines.textLines.length; pageIndex++) {
-      let page = this.docTextLines.textLines[pageIndex]
-      for (let lineIndex = 0; lineIndex < page.length; lineIndex++) {
-        let line = page[lineIndex]
-        if (!anchorPhraseFound) {
-          anchorPhraseStartIndex = line.text.indexOf(recurringDocCellSect.phraseOrValue)
-          if (anchorPhraseStartIndex !== -1) {
-            anchorPhraseFound = true
-            anchorPhraseEndIndex = anchorPhraseStartIndex + recurringDocCellSect.phraseOrValue.length - 1
-            anchorPhraseVertices = this.getPhraseOrValueVertices(anchorPhraseStartIndex, anchorPhraseEndIndex, line)
-            anchorPhraseVerticalMidPoint = this.getLineVerticalMidPoint(anchorPhraseVertices.yLowerRight, anchorPhraseVertices.yUpperLeft)
-            anchorPhrasePage = pageIndex
-            //if additional text proceeds a left anchor phrase within the same line, that additional text will be used as the first phrase in the count
-            //otherwise, the next line's text will be used as the first phrase in the count
-            if (recurringDocCellSect.searchOrInputMethod === 'leftPhrase' && line.text.length - 1 > anchorPhraseEndIndex) {
-              cellSectValue = line.text.substring(anchorPhraseEndIndex + 1)
-              phraseCount++
-            }
-          }
-        } else {
-          if (recurringDocCellSect.searchOrInputMethod === 'leftPhrase') {  
-            cellSectValue = line.text
-            phraseCount++
-          } else if (recurringDocCellSect.searchOrInputMethod === 'topPhrase') {
-            //do not continue searching for target phrase on different page
-            if (anchorPhrasePage === pageIndex) {
-              //anchor phrase must have an overlapping x-coord with the current line, and they cannot be on the same horizontal plane
-              if (line.vertices.xLowerRight > anchorPhraseVertices.xUpperLeft && line.vertices.xUpperLeft < anchorPhraseVertices.xLowerRight && !this.linesAreOnSameHorizontalPlane(anchorPhraseVerticalMidPoint, line.vertices.yLowerRight, line.vertices.yUpperLeft)) {
-                cellSectValue = line.text
-                phraseCount++
-              }
+    let cellSectValue = ''
+    let anchorPhraseIndeces = this.findAnchorPhrase(recurringDocCellSect.phraseOrValue) // { pageIndex, startWordIndex, startSymbolIndex, endWordIndex, endSymbolIndex }
+    //returns empty cellSectValue if anchor phrase isn't found
+    if (!anchorPhraseIndeces) {
+      return cellSectValue
+    }
+    let anchorPhraseCoords = this.getAnchorPhraseCoords(anchorPhraseIndeces) // { leftXCoord, rightXCoord, upperYCoord, lowerYCoord }
+    let cellSectValueStartWordIndex
+    let cellSectValueStartSymbolIndex
+    let page = this.wordList['words'][anchorPhraseIndeces.pageIndex]
+    //if anchor phrase terminates partway through a word, the cellSectValue parsing will begin with the next symbol of that word
+    if (page[anchorPhraseIndeces.endWordIndex]['symbols'][anchorPhraseIndeces.endSymbolIndex + 1]) {
+      cellSectValueStartWordIndex = anchorPhraseIndeces.endWordIndex
+      cellSectValueStartSymbolIndex = anchorPhraseIndeces.endSymbolIndex + 1
+    //if anchor phrase terminates at the end of a word, the cellSectValue parsing will begin with the next word
+    } else if (page[anchorPhraseIndeces.endWordIndex + 1]) {
+      cellSectValueStartWordIndex = anchorPhraseIndeces.endWordIndex + 1
+      cellSectValueStartSymbolIndex = 0
+    //if anchor phrase terminates at the end of the page, there will be no cellSectValue parsing and an empty string will be returned
+    } else {
+      return cellSectValue
+    } 
+    //parsing for cellSectValue
+    let stringCount = 0
+    let overlapStartWordIndex = null
+    let lineVerticalMidPoint = (anchorPhraseCoords.lowerYCoord - anchorPhraseCoords.upperYCoord)/2 + anchorPhraseCoords.upperYCoord  
+    for (let i = cellSectValueStartWordIndex; i < page.length; i++) {
+      let word = page[i]
+      for (let j = (i === cellSectValueStartWordIndex ? cellSectValueStartSymbolIndex : 0); j < word.symbols.length; j++) {
+        let symbol = word['symbols'][j]
+        let vertexType = symbol.boundingBox.vertices.length ? 'vertices' : 'normalizedVertices'
+        if (recurringDocCellSect.searchOrInputMethod === 'leftPhrase') {
+          cellSectValue += symbol.text 
+          if (symbol.property && symbol.property.detectedBreak) {
+            let nextWord = page[i + 1]
+            if (symbol.property.detectedBreak.type === 'SPACE' && nextWord && !this.isPhraseBreak(word, nextWord) && recurringDocCellSect.stringType === 'phrase') {
+              cellSectValue += ' '
+              continue
             } else {
-              cellSectValue = ''
-              return cellSectValue
+              stringCount ++
+              if (stringCount === recurringDocCellSect.phraseCount) {
+                return cellSectValue
+              } else {
+                cellSectValue = ''
+              }  
             }
           }
-        }
-        if (phraseCount === recurringDocCellSect.phraseCount) {
-          return cellSectValue
+        } else if (recurringDocCellSect.searchOrInputMethod === 'topPhrase') {
+          let wordVertices = word['boundingBox'][vertexType]
+          let stringsAreOnSameLine = this.stringsAreOnSameLine(lineVerticalMidPoint, wordVertices[2]['y'], wordVertices[0]['y']) 
+          if (!stringsAreOnSameLine && wordVertices[2]['x'] > anchorPhraseCoords.leftXCoord && wordVertices[0]['x'] < anchorPhraseCoords.rightXCoord) {
+            overlapStartWordIndex = i
+            lineVerticalMidPoint = (wordVertices[2]['y'] - wordVertices[0]['y'])/2 + wordVertices[0]['y']
+          }
+          if (overlapStartWordIndex) {
+            cellSectValue += symbol.text
+            if (symbol.property && symbol.property.detectedBreak) {
+              let nextWord = page[i + 1]
+              if (symbol.property.detectedBreak.type === 'SPACE' && nextWord && !this.isPhraseBreak(word, nextWord) && recurringDocCellSect.stringType === 'phrase') {
+                cellSectValue += ' '
+              } else {
+                stringCount ++
+                if (stringCount === recurringDocCellSect.phraseCount) {
+                  //prepends any adjacent special chars (if "words" string type) or words (if "phrase" string type) to the start of the target word/phrase, if they are are on the same line
+                  for (let n = overlapStartWordIndex; n > 0; n--) {
+                    let currentWord = page[n]
+                    let prevWord = page[n - 1]
+                    let prevWordText = prevWord.symbols.map(symbol => symbol.text).join('')
+                    let prevWordVertices = prevWord['boundingBox'][vertexType]
+                    let prevSymbol = prevWord['symbols'][prevWord.symbols.length - 1]
+                    let prevWordIsOnSameLine = this.stringsAreOnSameLine(lineVerticalMidPoint, prevWordVertices[2]['y'], prevWordVertices[0]['y'])
+                    let isPhraseBreak = this.isPhraseBreak(prevWord, currentWord)
+                    let isSpaceAfterPrevWord = !isPhraseBreak && prevSymbol.property && prevSymbol.property.detectedBreak && prevSymbol.property.detectedBreak.type === 'SPACE'
+                    if (!isPhraseBreak && prevWordIsOnSameLine ) {
+                      if (!isSpaceAfterPrevWord) {
+                        cellSectValue = prevWordText + cellSectValue
+                      } else if (recurringDocCellSect.stringType === 'phrase') {
+                        cellSectValue = prevWordText + ' ' + cellSectValue
+                      } else {
+                        return cellSectValue
+                      }
+                    } else {
+                      return cellSectValue
+                    }
+                  }
+                } else {
+                  cellSectValue = ''
+                  overlapStartWordIndex = null
+                }
+              }
+            }
+          }
         }
       }
-    }
-    cellSectValue = ''
+    }        
     return cellSectValue
   }
-
-
+     
+ 
   /**
    * Gets CSV cell section value using SearchOrInput method; if applicable, will also format as date and append characters 
    * @param {Object} recurringDocCellSect - Recurring doc cell section 
@@ -219,8 +334,8 @@ class CellValueGenerator {
     cellSectValue = cellSectValue.trimStart()
     return cellSectValue
   }
-
-
+  
+  
   /**
    * Combines the individual CSV cell section values into one CSV cell value 
    * @param {Object} recurringDocCell - Recurring doc cell  
@@ -236,8 +351,8 @@ class CellValueGenerator {
     })
     return cellValue
   }
- 
-  
+   
+    
   /**
    * Compile CSV header data
    * @returns {Header} - CSV header 
@@ -249,8 +364,8 @@ class CellValueGenerator {
     })
     return CSVHeader
   }
+    
   
-
   /**
    * Compile CSV row data
    * @param {Header} CSVHeader - CSV header
@@ -270,8 +385,8 @@ class CellValueGenerator {
     })
     return CSVDataRows
   }
-
-
+  
+  
   /**
    * Compile all CSV data for a doc 
    * @returns {CSVBlueprint} - CSV blueprint
@@ -285,6 +400,6 @@ class CellValueGenerator {
     return CSVBlueprint
   }
 }
-
-
+  
+  
 module.exports = CellValueGenerator
