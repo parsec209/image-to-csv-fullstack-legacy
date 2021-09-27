@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>JSDoc: Source: services/zipWriter.js</title>
+    <title>JSDoc: Source: util/inputError.js</title>
 
     <script src="scripts/prettify/prettify.js"> </script>
     <script src="scripts/prettify/lang-css.js"> </script>
@@ -17,7 +17,7 @@
 
 <div id="main">
 
-    <h1 class="page-title">Source: services/zipWriter.js</h1>
+    <h1 class="page-title">Source: util/inputError.js</h1>
 
     
 
@@ -26,76 +26,37 @@
     
     <section>
         <article>
-            <pre class="prettyprint source linenums"><code>/**
- * zipWriter module
- * @module zipWriter
- */
-
-const {Storage} = require('@google-cloud/storage')
-const storage = new Storage()
-const bucket = storage.bucket(process.env.STORAGE_BUCKET)
-const zipBucket = require('zip-bucket')(storage)
-const { validateArgs, schemas } = require('../util/argsValidator')
-const Joi = require('joi')
-const InputError = require('../util/inputError')
-
-
-// @ts-check
+            <pre class="prettyprint source linenums"><code>//@ts-check
 
 
 /**
- * Class to create a zipWriter object
+ * Class to create an inputError object, used for operational client input errors
+ * @extends Error
  */
-class ZipWriter {
+class InputError extends Error {
   /**
-   * Create a zipWriter
-   * @param {User} user - User info
-   * @param {string} fileBatchID - Batch ID for files
+   * Create an inputError
+   * @namespace
+   * @param {string} message - Custom message about the input error
+   * @param {number} statusCode - HTTP response status code
    */
-  constructor (user, fileBatchID) {  
-    validateArgs(arguments, { 0: schemas.user, 1: schemas.fileBatchID } )
-    this.user = user
-    this.fileBatchID = fileBatchID
-  }
-
-
-  /**
-   * Creates a zip file in GCP storage bucket containing the generated CSV files 
-   * @returns {Promise&lt;Object>} - see {@link https://www.npmjs.com/package/zip-bucket#promise-resolution}
-   * @throws {InputError} - Cannot create zip due to invalid file batch ID or lack of CSV files
-   */
-  async createZip() {
-    const results = await zipBucket({ 
-      fromBucket: process.env.STORAGE_BUCKET, 
-      fromPath: `${this.user._id}/downloads/${this.fileBatchID}`, 
-      toBucket: process.env.STORAGE_BUCKET, 
-      toPath: `${this.user._id}/downloads/${this.fileBatchID}/CSVFiles.zip`  
-    })
-    if (!results.manifest.length) {
-      throw new InputError('Unable to create zip file due to either file batch ID or CSV files not existing', 404)
-    }
-    return results
-  }
-  
-
-  /**
-   * Gets the temporary URL for downloading the zip file
-   * @returns {Promise&lt;string>} - URL
-   */
-  async getURL() {
-    const file = bucket.file(`${this.user._id}/downloads/${this.fileBatchID}/CSVFiles.zip`) 
-    //url expires in 30 seconds
-    const expireDate = new Date().getTime() + 30000
-    const url = await file.getSignedUrl({
-      action: 'read',
-      expires: expireDate  
-    })
-    return url[0]
+  constructor(message, statusCode) {
+    super(message)
+    this.statusCode = statusCode
+    this.status = 'fail'
+    this.isOperational = true
   }
 }
 
+module.exports = InputError
 
-module.exports = ZipWriter</code></pre>
+
+
+
+
+
+
+</code></pre>
         </article>
     </section>
 

@@ -1,10 +1,12 @@
 /**
- * PostService module
- * @module PostService
+ * postService module
+ * @module postService
  */
 
-const { validateArgs } = require('../util/ArgsValidator')
-const InputError = require('../util/InputError')
+const { validateArgs, schemas } = require('../util/argsValidator')
+const InputError = require('../util/inputError')
+const Joi = require('joi')
+
 
 // @ts-check
 
@@ -18,12 +20,12 @@ class PostService {
    * @param {Object} Model - Mongoose constructor, see {@link https://mongoosejs.com/docs/api/model.html#model_Model}
    */
   constructor (Model) {
-    validateArgs(['{schema: Object, ...}'], arguments)
+    validateArgs(arguments, { 0: Joi.function() })    
     this.model = Model
   }
 
 
-  //Note: 'document' in this module refers to any Mongoose model instance, which in this case can be either a 'Header' or 'Doc' instance
+  //Note: 'document' in this module refers to a generic Mongoose model instance (can be either a header or recurring doc)
 
 
   /**
@@ -32,7 +34,7 @@ class PostService {
    * @returns {Promise<Array<Object>>} - Array of found documents
    */
   async findAll(query) {  
-    validateArgs(['Object'], arguments)
+    validateArgs(arguments, { 0: Joi.object() })    
     const documents = await this.model.find(query)
     return documents
   }
@@ -44,7 +46,7 @@ class PostService {
    * @returns {Promise<Object>} - Found document
    */
   async find(id) {
-    validateArgs(['String'], arguments)
+    validateArgs(arguments, { 0: Joi.string() })    
     const document = await this.model.findById(id)
     return document
   }
@@ -54,21 +56,29 @@ class PostService {
    * Posts a document to db
    * @param {Object} props - Schema keys and their values
    * @returns {Promise<Object>} - Newly created document
+   * @throws {InputError} - document name already exists
+   * @throws {InputError} - recurring doc idPhrase already exists
    */
   async post(props) {  
-    validateArgs(['{user: Object, ...}'], arguments)
+    validateArgs(arguments, 
+      {
+        0: Joi.object({
+          user: Joi.object().required()
+        }).unknown()      
+      }
+    )    
     const document = new this.model(props)
 
     const countDupNames = await this.model.countDocuments({ name: document.name, 'user.id': document.user.id })
     if (countDupNames) {
-      throw new InputError(`The following name has already been used: ${document.name}`, 400)
+      throw new InputError(`The following name has already been used: ${document.name}`, 500)
     }
 
-    //only for recurring docs 
+    //only applies to recurring docs 
     if (document.idPhrase) {
       const countDupIDPhrases = await this.model.countDocuments({ idPhrase: document.idPhrase, 'user.id': document.user.id })
       if (countDupIDPhrases) {
-        throw new InputError(`The following ID phrase has already been used: ${document.idPhrase}`, 400)
+        throw new InputError(`The following ID phrase has already been used: ${document.idPhrase}`, 500)
       }
     }
 
@@ -82,22 +92,24 @@ class PostService {
    * @param {Object} document - Document to update
    * @param {Object} props - Schema keys and their values
    * @returns {Promise<Object>} - Updated document
+   * @throws {InputError} - document name already exists
+   * @throws {InputError} - recurring doc idPhrase already exists
    */
   async update(document, props) {  
-    validateArgs(['{name: String, user: Object, ...}', 'Object'], arguments)
-
+    validateArgs(arguments, { 0: schemas.document, 1: Joi.object() })    
+    
     if (props.hasOwnProperty('name')) {
       const countDupNames = await this.model.countDocuments({ name: props.name, _id: { $ne: document._id }, 'user.id': document.user.id })
       if (countDupNames) {
-        throw new InputError(`The following name has already been used: ${props.name}`, 400)
+        throw new InputError(`The following name has already been used: ${props.name}`, 500)
       }
     }
 
-    //only for recurring docs 
+    //only applies to recurring docs 
     if (props.hasOwnProperty('idPhrase')) {
       const countDupIDPhrases = await this.model.countDocuments({ idPhrase: props.idPhrase, _id: { $ne: document._id }, 'user.id': document.user.id })
       if (countDupIDPhrases) {
-        throw new InputError(`The following ID phrase has already been used: ${props.idPhrase}`, 400)
+        throw new InputError(`The following ID phrase has already been used: ${props.idPhrase}`, 500)
       }
     }
 
@@ -115,7 +127,7 @@ class PostService {
    * @returns {Promise<Object>} - Deleted document
    */
   async destroy(document) {  
-    validateArgs(['{name: String, user: Object, ...}'], arguments)
+    validateArgs(arguments, { 0: schemas.document })    
     await this.model.deleteOne({ _id: document._id })
     return document
   }

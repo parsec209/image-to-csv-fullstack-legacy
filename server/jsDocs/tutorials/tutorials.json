@@ -1,9 +1,9 @@
 {
-  "WordListGenerator-tutorial": {
-    "title": "WordListGenerator"
+  "wordListGenerator-tutorial": {
+    "title": "wordListGenerator"
   },
-  "CellValueGenerator-tutorial": {
-    "title": "CellValueGenerator"
+  "cellValueGenerator-tutorial": {
+    "title": "cellValueGenerator"
   },
   "CSVGenerator-tutorial": {
     "title": "CSVGenerator"

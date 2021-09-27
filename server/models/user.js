@@ -1,6 +1,6 @@
 const mongoose = require('mongoose')
 const passportLocalMongoose = require('passport-local-mongoose')
-const { passwordValidator } = require('../util/PostValidator')
+const { passwordValidator } = require('../util/postValidator')
 
 
 const userSchema = new mongoose.Schema({

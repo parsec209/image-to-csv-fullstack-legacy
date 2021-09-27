@@ -1,13 +1,15 @@
 /**
- * ZipWriter module
- * @module ZipWriter
+ * zipWriter module
+ * @module zipWriter
  */
 
 const {Storage} = require('@google-cloud/storage')
 const storage = new Storage()
 const bucket = storage.bucket(process.env.STORAGE_BUCKET)
 const zipBucket = require('zip-bucket')(storage)
-const { validateArgs } = require('../util/ArgsValidator')
+const { validateArgs, schemas } = require('../util/argsValidator')
+const Joi = require('joi')
+const InputError = require('../util/inputError')
 
 
 // @ts-check
@@ -22,8 +24,8 @@ class ZipWriter {
    * @param {User} user - User info
    * @param {string} fileBatchID - Batch ID for files
    */
-  constructor (user, fileBatchID) {
-    validateArgs(['{username: String,  _id: {toHexString: Function, ...}, ...}', 'String'], arguments)    
+  constructor (user, fileBatchID) {  
+    validateArgs(arguments, { 0: schemas.user, 1: schemas.fileBatchID } )
     this.user = user
     this.fileBatchID = fileBatchID
   }
@@ -32,6 +34,7 @@ class ZipWriter {
   /**
    * Creates a zip file in GCP storage bucket containing the generated CSV files 
    * @returns {Promise<Object>} - see {@link https://www.npmjs.com/package/zip-bucket#promise-resolution}
+   * @throws {InputError} - Cannot create zip due to invalid file batch ID or lack of CSV files
    */
   async createZip() {
     const results = await zipBucket({ 
@@ -41,7 +44,7 @@ class ZipWriter {
       toPath: `${this.user._id}/downloads/${this.fileBatchID}/CSVFiles.zip`  
     })
     if (!results.manifest.length) {
-      throw new Error('Error creating zip file')
+      throw new InputError('Unable to create zip file due to either file batch ID or CSV files not existing', 404)
     }
     return results
   }

@@ -3,7 +3,7 @@ const setupApp = require('../loaders/app')
 const request = require('supertest')
 const User = require('../models/user')
 const { v4: uuidv4 } = require('uuid')
-const { generateToken, addTokenToUser, sendResetEmail, getTokenUser, passwordReset, sendConfEmail } = require('../services/PasswordReset')
+const { generateToken, addTokenToUser, sendResetEmail, getTokenUser, passwordReset, sendConfEmail } = require('../services/passwordReset')
 
 
 

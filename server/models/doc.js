@@ -1,6 +1,6 @@
 const mongoose = require('mongoose')
 const headerCellSchema = require('./headerCell')
-const util = require('../util/PostValidator')
+const util = require('../util/postValidator')
 
 
 const cellSectSchema = new mongoose.Schema({
@@ -11,7 +11,7 @@ const cellSectSchema = new mongoose.Schema({
   phraseCount: {
     type: Number,
     min: 1,
-    max: 99, 
+    max: 100, 
     default: 1,
     validate: [util.phraseCountIsInteger]   
   },
@@ -22,7 +22,7 @@ const cellSectSchema = new mongoose.Schema({
   },
   phraseOrValue: {
     type: String,
-    max: 100,    
+    maxLength: 100,    
     required: function() {
       return ['topPhrase', 'leftPhrase', 'pattern', 'customValue'].includes(this.searchOrInputMethod)
     },
@@ -30,10 +30,14 @@ const cellSectSchema = new mongoose.Schema({
   },
   appendChars: {
     type: String,
+    minLength: 1,
+    maxLength: 100, 
     validate: [util.searchOrInputMethodIsDefined]            
   },
   dateFormat: {
     type: String,
+    minLength: 1,
+    maxLength: 100, 
     validate: [util.searchOrInputMethodIsDefined, util.dateFormatContainsValidChars]
   },   
   daysAdded: {
@@ -43,7 +47,9 @@ const cellSectSchema = new mongoose.Schema({
     validate: [util.daysAddedIsInteger]   
   },
   notes: {
-    type: String
+    type: String,
+    minLength: 1,
+    maxLength: 100
   }
 })
 
@@ -70,16 +76,17 @@ const docSchema = new mongoose.Schema({
   name: {
     type: String,
     required: true,
-    maxlength: 100,
+    maxLength: 100
   }, 
   idPhrase: {
     type: String,
     required: true,
-    maxlength: 100,
+    maxLength: 100
   },
   idPhrase2: {
     type: String,
-    maxlength: 100
+    minLength: 1,
+    maxLength: 100
   },
   header: {
     type: [headerCellSchema],

@@ -35,90 +35,101 @@ const createCSVStringifier = require('csv-writer').createObjectCsvStringifier
 const {Storage} = require('@google-cloud/storage')
 const storage = new Storage()
 const bucket = storage.bucket(process.env.STORAGE_BUCKET)
-const { validateArgs } = require('../util/ArgsValidator')
+const { validateArgs, schemas } = require('../util/argsValidator')
+const Joi = require('joi')
 
 
 // @ts-check
 
 
 /**
- * Class to create csvWriter object
+ * Prepares blueprints to be writeable to CSV files. If any blueprints contain identical headers, their data rows are consolidated into the same blueprint
+ * @param {Array&lt;CSVBlueprint>} CSVBlueprints - Array of CSV blueprints
+ * @returns {Array&lt;ConsolidatedBlueprint>} - Array of blueprints formatted for the csv-writer
  */
-class CSVWriter {
-  /**
-   * Create csvWriter
-   * @param {UserID} userID - User ID
-   * @param {string} fileBatchID - Batch ID for files
-   * @param {Array&lt;CSVBlueprint>} CSVBlueprints - Array of CSV blueprints
-   */
-  constructor (userID, fileBatchID, CSVBlueprints) {
-    validateArgs(['{toHexString: Function, ...}', 'String', '[{fileName: String, CSVHeader: Array, CSVDataRows: Array}]'], arguments)
-    this.userID = userID
-    this.fileBatchID = fileBatchID
-    this.CSVBlueprints = CSVBlueprints
-  }
-
-
-  /**
-   * Prepares blueprints to be writeable to CSV file/s. If any blueprints contain identical headers, their data rows are consolidated into one object
-   * @returns {Array&lt;consolidatedBlueprint>} - Array of CSV-writeable blueprints
-   */
-  getConsolidatedBlueprints() {
-    const consolidatedBlueprints = []
-    this.CSVBlueprints.forEach(CSVBlueprint => {
-      for (let i = 0; i &lt; consolidatedBlueprints.length; i++) { 
-        if (JSON.stringify(CSVBlueprint.CSVHeader) === JSON.stringify(consolidatedBlueprints[i].header)) {
-          consolidatedBlueprints[i].dataRows.push(...CSVBlueprint.CSVDataRows)
-          return
-        }
+const getConsolidatedBlueprints = function(CSVBlueprints) {
+  validateArgs(arguments, 
+    {
+      0: Joi.array().items(
+        Joi.object({
+          fileName: Joi.string().required(),
+          CSVHeader: Joi.array().required(),
+          CSVDataRows: Joi.array().required()
+        }).required()
+      )
+    }
+  )
+  const consolidatedBlueprints = []
+  CSVBlueprints.forEach(CSVBlueprint => {
+    for (let i = 0; i &lt; consolidatedBlueprints.length; i++) { 
+      if (JSON.stringify(CSVBlueprint.CSVHeader) === JSON.stringify(consolidatedBlueprints[i].header)) {
+        consolidatedBlueprints[i].dataRows.push(...CSVBlueprint.CSVDataRows)
+        return
       }
-      consolidatedBlueprints.push({
-        header: CSVBlueprint.CSVHeader,
-        dataRows: CSVBlueprint.CSVDataRows
-      }) 
-    })
-    return consolidatedBlueprints
-  }
-
-  
-  /**
-   * Writes CSV files and uploads them to GCP storage bucket
-   * @param {Array&lt;consolidatedBlueprint>} consolidatedBlueprints - Array of CSV-writeable blueprints
-   * @returns {Promise&lt;void>}
-   */
-  async writeCSVFiles(consolidatedBlueprints) {
-    validateArgs(['[{header: Array, dataRows: Array}]'], arguments)
-    const self = this
-    const filesWritten = consolidatedBlueprints.map(function(blueprint, fileNumber) {
-      const CSVStringifier = createCSVStringifier({
-        header: blueprint.header
-      })
-      const header = CSVStringifier.getHeaderString()
-      const dataRows = CSVStringifier.stringifyRecords(blueprint.dataRows)
-      return new Promise((resolve, reject) => {
-        const blob = bucket.file(`${self.userID}/downloads/${self.fileBatchID}/${fileNumber}.csv`)
-        const blobStream = blob.createWriteStream(
-          { 
-            metadata: {
-              contentType: 'text/csv'
-            }
-          }
-        )
-        blobStream.on('finish', () => {
-          resolve()
-        })
-        blobStream.on('error', err => {
-          reject(err)
-        })
-        blobStream.end(header + dataRows)
-      })
-    })
-    await Promise.all(filesWritten)
-  }
+    }
+    consolidatedBlueprints.push({
+      header: CSVBlueprint.CSVHeader,
+      dataRows: CSVBlueprint.CSVDataRows
+    }) 
+  })
+  return consolidatedBlueprints
 }
 
 
-module.exports = CSVWriter
+/**
+ * Writes CSV files and uploads them to GCP storage bucket
+ * @param {Array&lt;ConsolidatedBlueprint>} consolidatedBlueprints - Array of CSV-writeable blueprints
+ * @param {UserID} userID - User ID
+ * @param {string} fileBatchID - Batch ID for files
+ * @returns {Promise&lt;void>}
+ * @throws {Error} - Unexpected error during stream
+ */
+const writeCSVFiles = async function(consolidatedBlueprints, userID, fileBatchID) {
+  validateArgs(arguments, 
+    {
+      0: Joi.array().items(
+        Joi.object({
+          header: Joi.array().required(),
+          dataRows: Joi.array().required()
+        }).required()
+      ),
+
+      1: Joi.object({
+        toHexString: Joi.function().required()
+      }).unknown(),
+
+      2: schemas.fileBatchID
+    }
+  )
+  await Promise.all(consolidatedBlueprints.map(function(blueprint, fileNumber) {
+    const CSVStringifier = createCSVStringifier({
+      header: blueprint.header
+    })
+    const header = CSVStringifier.getHeaderString()
+    const dataRows = CSVStringifier.stringifyRecords(blueprint.dataRows)
+    return new Promise((resolve, reject) => {
+      const blob = bucket.file(`${userID}/downloads/${fileBatchID}/${fileNumber}.csv`)
+      const blobStream = blob.createWriteStream(
+        { 
+          metadata: {
+            contentType: 'text/csv'
+          }
+        }
+      )
+      blobStream.on('finish', () => {
+        resolve()
+      })
+      blobStream.on('error', err => {
+        reject(err)
+      })
+      blobStream.end(header + dataRows)
+    })
+  }))
+}
+
+
+
+module.exports = { getConsolidatedBlueprints, writeCSVFiles }
 
 
 
@@ -145,13 +156,13 @@ module.exports = CSVWriter
 </div>
 
 <nav>
-    <h2><a href="index.html">Img-To-CSV Services</a></h2><h3>Modules</h3><ul><li><a href="module-CellValueGenerator.html">CellValueGenerator</a></li><li><a href="module-CSVGenerator.html">CSVGenerator</a></li><li><a href="module-CSVWriter.html">CSVWriter</a></li><li><a href="module-PasswordReset.html">PasswordReset</a></li><li><a href="module-PostService.html">PostService</a></li><li><a href="module-TextExtractor.html">TextExtractor</a></li><li><a href="module-Uploader.html">Uploader</a></li><li><a href="module-WordListGenerator.html">WordListGenerator</a></li><li><a href="module-ZipWriter.html">ZipWriter</a></li></ul><h3>Classes</h3><ul><li><a href="module-CellValueGenerator-CellValueGenerator.html">CellValueGenerator</a></li><li><a href="module-CSVGenerator-CSVGenerator.html">CSVGenerator</a></li><li><a href="module-CSVWriter-CSVWriter.html">CSVWriter</a></li><li><a href="module-PostService-PostService.html">PostService</a></li><li><a href="module-TextExtractor-TextExtractor.html">TextExtractor</a></li><li><a href="module-Uploader-Uploader.html">Uploader</a></li><li><a href="module-WordListGenerator-WordListGenerator.html">WordListGenerator</a></li><li><a href="module-ZipWriter-ZipWriter.html">ZipWriter</a></li></ul><h3>Tutorials</h3><ul><li><a href="tutorial-CellValueGenerator-tutorial.html">CellValueGenerator</a></li><li><a href="tutorial-CSVGenerator-tutorial.html">CSVGenerator</a></li><li><a href="tutorial-WordListGenerator-tutorial.html">WordListGenerator</a></li></ul><h3><a href="global.html">Global</a></h3>
+    <h2><a href="index.html">Img-To-CSV Services</a></h2><h3>Modules</h3><ul><li><a href="module-cellValueGenerator.html">cellValueGenerator</a></li><li><a href="module-CSVGenerator.html">CSVGenerator</a></li><li><a href="module-CSVWriter.html">CSVWriter</a></li><li><a href="module-passwordReset.html">passwordReset</a></li><li><a href="module-postService.html">postService</a></li><li><a href="module-textExtractor.html">textExtractor</a></li><li><a href="module-uploader.html">uploader</a></li><li><a href="module-wordListGenerator.html">wordListGenerator</a></li><li><a href="module-zipWriter.html">zipWriter</a></li></ul><h3>Classes</h3><ul><li><a href="InputError.html">InputError</a></li><li><a href="module-cellValueGenerator-CellValueGenerator.html">CellValueGenerator</a></li><li><a href="module-postService-PostService.html">PostService</a></li><li><a href="module-uploader-Uploader.html">Uploader</a></li><li><a href="module-zipWriter-ZipWriter.html">ZipWriter</a></li></ul><h3>Tutorials</h3><ul><li><a href="tutorial-cellValueGenerator-tutorial.html">cellValueGenerator</a></li><li><a href="tutorial-CSVGenerator-tutorial.html">CSVGenerator</a></li><li><a href="tutorial-wordListGenerator-tutorial.html">wordListGenerator</a></li></ul><h3><a href="global.html">Global</a></h3>
 </nav>
 
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.6</a> on Wed Aug 18 2021 22:36:30 GMT-0400 (Eastern Daylight Time)
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.6</a> on Sun Sep 26 2021 22:39:09 GMT-0400 (Eastern Daylight Time)
 </footer>
 
 <script> prettyPrint(); </script>

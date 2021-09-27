@@ -1,4 +1,4 @@
-const InputError = require('../util/InputError')
+const InputError = require('./inputError')
 
 
 //Custom database validations
@@ -63,7 +63,7 @@ module.exports = {
         return true
       }
     },
-    message: 'SearchOrInputMethod cannot be "today"'
+    message: 'PhraseOrValue cannot be included when the searchOrInputMethod is "today"'
   },
 
   searchOrInputMethodIsDefined: {
@@ -74,7 +74,7 @@ module.exports = {
         return true
       }
     },
-    message: 'SearchOrInputMethod must be defined'
+    message: 'The inclusion of this property requires a searchOrInputMethod'
   },  
   
   dateFormatContainsValidChars: {

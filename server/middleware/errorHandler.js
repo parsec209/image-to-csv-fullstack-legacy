@@ -16,20 +16,27 @@ module.exports = (err, req, res, next) => {
   for (const API in trustedErrors) {
     if (trustedErrors[API].includes(err.name) || trustedErrors[API].includes(err.code)) {
       err.isOperational = true
+      err.status = 'fail'
       break
     }
   }
 
   err.isOperational = err.isOperational || false
-  logger.log({ level: err.isOperational ? 'info' : 'error', message: err })
-  
-  
-  //make the Mongodb duplicate field error message easier to read for user
-  if (err.code && err.code === 11000) {
-    const fieldAndValue = err.message.substring(err.message.indexOf('{'))
-    const message = `The same value already exists for the following field: ${fieldAndValue}`
-    err.message = message
-  };
+
+  if (process.env.NODE_ENV !== 'test') {
+    logger.log({ level: err.isOperational ? 'info' : 'error', message: err })  
+  }
+
+  //make the Mongodb duplicate field error, and the GCP invalid pages error, more readable for user
+  if (err.code) {
+    if (err.code === 11000) {
+      const fieldAndValue = err.message.substring(err.message.indexOf('{'))
+      err.message = `The same value already exists for the following field: ${fieldAndValue}`
+    } 
+    if (err.code === 3) {
+      err.message = 'None of the selected pages match an actual document page in this batch'
+    }
+  }
 
   if (err.isOperational) {
     res.status(err.statusCode).json({

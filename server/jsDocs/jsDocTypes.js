@@ -10,9 +10,6 @@
  * @property {UserID} _id - User ID
  * @property {string} username -  User's username
  * @property {string} email - User's email address
- * @property {string} salt - Salt value
- * @property {string} hash - Hashed password
- * @property {number} __v - Version key
  */
 
 
@@ -93,10 +90,19 @@
  
  /**
   * Object used to write CSV file
-  * @typedef {Object} consolidatedBlueprint
+  * @typedef {Object} ConsolidatedBlueprint
   * @property {Array<{id: string, title: string}>} header - Header cell values
   * @property {Array<Object>} dataRows - Data cell values 
   */
+
+
+/**
+ * Error object. See {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error}
+ * @typedef {Object} Error
+ */
+
+
+
 
  
 

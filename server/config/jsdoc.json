@@ -1,6 +1,6 @@
 {
   "source": {
-    "include": ["server/services", "server/util/jsDocTypes.js"]
+    "include": ["server/services", "server/util", "server/jsDocs/jsDocTypes.js" ]
   },
   "plugins": ["plugins/markdown"],
   "templates": {

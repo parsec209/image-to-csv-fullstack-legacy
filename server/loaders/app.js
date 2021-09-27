@@ -14,8 +14,9 @@ module.exports = (dbConnection) => {
   const recurringDocRoutes = require('../routes/api/docs')
   const errorHandler = require('../middleware/errorHandler')
   const path = require('path')
+  const swaggerSpecs = require('../config/swagger/UISetup')
+  const swaggerUI = require('swagger-ui-express')
   
-
 
   app.use(express.urlencoded({extended: true}))
   app.use(express.json())
@@ -25,10 +26,14 @@ module.exports = (dbConnection) => {
   const store = new MongoStore({ mongooseConnection: dbConnection })
   app.use(session({
     store,
+    name: 'mySession',
     secret: process.env.SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
-    cookie: { maxAge: 21600000 }  //expires after 6 hours
+    cookie: { 
+      maxAge: 28800000, //expires after 8 hours
+      secure: process.env.NODE_ENV === 'production' ? true : false
+    }  
   }))
 
 
@@ -41,7 +46,9 @@ module.exports = (dbConnection) => {
 
 
   //HTTP request logging
-  app.use(morgan('combined', { stream: logger.stream }))
+  if (process.env.NODE_ENV !== 'test') {
+    app.use(morgan('combined', { stream: logger.stream }))
+  }
 
 
   //API routes
@@ -55,6 +62,9 @@ module.exports = (dbConnection) => {
   if (process.env.NODE_ENV === 'production') {
     app.use(express.static(path.normalize(`${__dirname}/../public/`)))
     app.get(/.*/, (req, res) => res.sendFile(path.normalize(`${__dirname}/../public/index.html`)))
+  } else {
+  //API documentation route
+    app.use('/api-docs', swaggerUI.serve, swaggerUI.setup(swaggerSpecs));
   }
 
   

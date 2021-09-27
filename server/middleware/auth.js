@@ -1,8 +1,9 @@
 const passport = require('passport')
 const Header = require('../models/header')
 const Doc = require('../models/doc')
-const PostService = require('../services/PostService')
-const InputError = require('../util/InputError')
+const PostService = require('../services/postService')
+const InputError = require('../util/inputError')
+const { validateReqParams } = require('../util/argsValidator')
 
 
 
@@ -46,8 +47,8 @@ module.exports = {
 
 
   isUserHeader: async (req, res, next) => {
-    const headerID = req.params.id
     try {
+      const headerID = validateReqParams(req.params.id)
       const postService = new PostService(Header)
       const header = await postService.find(headerID)
       if (!header) {
@@ -66,8 +67,8 @@ module.exports = {
   
   
   isUserDoc: async (req, res, next) => {
-    const docID = req.params.id
     try {
+      const docID = validateReqParams(req.params.id)
       const postService = new PostService(Doc)
       const doc = await postService.find(docID)
       if (!doc) {

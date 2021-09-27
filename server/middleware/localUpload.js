@@ -1,5 +1,5 @@
 const multer = require('multer')
-const InputError = require('../util/InputError')
+const InputError = require('../util/inputError')
 
 
 const upload = multer({

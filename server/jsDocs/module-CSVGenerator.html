@@ -126,12 +126,167 @@
     
 
     
-        <h3 class="subsection-title">Classes</h3>
 
-        <dl>
-            <dt><a href="module-CSVGenerator-CSVGenerator.html">CSVGenerator</a></dt>
-            <dd></dd>
-        </dl>
+    
+
+    
+
+    
+
+    
+
+    
+        <h3 class="subsection-title">Methods</h3>
+
+        
+            
+
+    
+
+    
+    <h4 class="name" id="~compileData"><span class="type-signature">(async, inner) </span>compileData<span class="signature">(user, fileBatchID, pageSelections, dateToday)</span><span class="type-signature"> &rarr; {Promise.&lt;{identifiedDocs: Array.&lt;string>, unidentifiedDocs: Array.&lt;string>}>}</span></h4>
+    
+
+    
+
+
+
+<div class="description">
+    <p>Process starting at batch image annotation and ending when the generated CSV files are uploaded to GCP storage bucket</p>
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>user</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type"><a href="global.html#User">User</a></span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>User info</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>fileBatchID</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>Batch ID for files</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>pageSelections</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Array.&lt;number></span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>Page numbers to scan for this file batch</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>dateToday</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>Today's date (per client)</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+<dl class="details">
+
     
 
     
@@ -142,6 +297,262 @@
 
     
 
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="services_CSVGenerator.js.html">services/CSVGenerator.js</a>, <a href="services_CSVGenerator.js.html#line76">line 76</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    <ul>
+<li>Lists the identified and unidentified filenames in the batch, based on whether they contained a recurring doc ID phrase</li>
+</ul>
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">Promise.&lt;{identifiedDocs: Array.&lt;string>, unidentifiedDocs: Array.&lt;string>}></span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+
+
+
+        
+            
+
+    
+
+    
+    <h4 class="name" id="~identifyDocText"><span class="type-signature">(inner) </span>identifyDocText<span class="signature">(docsText, recurringDocs)</span><span class="type-signature"> &rarr; {<a href="global.html#MatchedText">MatchedText</a>}</span></h4>
+    
+
+    
+
+
+
+<div class="description">
+    <p>Parses each document's text to see if it contains one of the recurring document ID phrases</p>
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>docsText</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Array.&lt;<a href="global.html#DocText">DocText</a>></span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>Extracted text from all the docs in the batch</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>recurringDocs</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Array.&lt;Object></span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>Mongoose Doc model instances (recurring documents)</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="services_CSVGenerator.js.html">services/CSVGenerator.js</a>, <a href="services_CSVGenerator.js.html#line30">line 30</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    <ul>
+<li>Specifies which uploads contain a recurring doc's ID phrase</li>
+</ul>
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type"><a href="global.html#MatchedText">MatchedText</a></span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+
+
+
+        
     
 
     
@@ -157,13 +568,13 @@
 </div>
 
 <nav>
-    <h2><a href="index.html">Img-To-CSV Services</a></h2><h3>Modules</h3><ul><li><a href="module-CellValueGenerator.html">CellValueGenerator</a></li><li><a href="module-CSVGenerator.html">CSVGenerator</a></li><li><a href="module-CSVWriter.html">CSVWriter</a></li><li><a href="module-PasswordReset.html">PasswordReset</a></li><li><a href="module-PostService.html">PostService</a></li><li><a href="module-TextExtractor.html">TextExtractor</a></li><li><a href="module-Uploader.html">Uploader</a></li><li><a href="module-WordListGenerator.html">WordListGenerator</a></li><li><a href="module-ZipWriter.html">ZipWriter</a></li></ul><h3>Classes</h3><ul><li><a href="module-CellValueGenerator-CellValueGenerator.html">CellValueGenerator</a></li><li><a href="module-CSVGenerator-CSVGenerator.html">CSVGenerator</a></li><li><a href="module-CSVWriter-CSVWriter.html">CSVWriter</a></li><li><a href="module-PostService-PostService.html">PostService</a></li><li><a href="module-TextExtractor-TextExtractor.html">TextExtractor</a></li><li><a href="module-Uploader-Uploader.html">Uploader</a></li><li><a href="module-WordListGenerator-WordListGenerator.html">WordListGenerator</a></li><li><a href="module-ZipWriter-ZipWriter.html">ZipWriter</a></li></ul><h3>Tutorials</h3><ul><li><a href="tutorial-CellValueGenerator-tutorial.html">CellValueGenerator</a></li><li><a href="tutorial-CSVGenerator-tutorial.html">CSVGenerator</a></li><li><a href="tutorial-WordListGenerator-tutorial.html">WordListGenerator</a></li></ul><h3><a href="global.html">Global</a></h3>
+    <h2><a href="index.html">Img-To-CSV Services</a></h2><h3>Modules</h3><ul><li><a href="module-cellValueGenerator.html">cellValueGenerator</a></li><li><a href="module-CSVGenerator.html">CSVGenerator</a></li><li><a href="module-CSVWriter.html">CSVWriter</a></li><li><a href="module-passwordReset.html">passwordReset</a></li><li><a href="module-postService.html">postService</a></li><li><a href="module-textExtractor.html">textExtractor</a></li><li><a href="module-uploader.html">uploader</a></li><li><a href="module-wordListGenerator.html">wordListGenerator</a></li><li><a href="module-zipWriter.html">zipWriter</a></li></ul><h3>Classes</h3><ul><li><a href="InputError.html">InputError</a></li><li><a href="module-cellValueGenerator-CellValueGenerator.html">CellValueGenerator</a></li><li><a href="module-postService-PostService.html">PostService</a></li><li><a href="module-uploader-Uploader.html">Uploader</a></li><li><a href="module-zipWriter-ZipWriter.html">ZipWriter</a></li></ul><h3>Tutorials</h3><ul><li><a href="tutorial-cellValueGenerator-tutorial.html">cellValueGenerator</a></li><li><a href="tutorial-CSVGenerator-tutorial.html">CSVGenerator</a></li><li><a href="tutorial-wordListGenerator-tutorial.html">wordListGenerator</a></li></ul><h3><a href="global.html">Global</a></h3>
 </nav>
 
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.6</a> on Wed Aug 18 2021 22:36:30 GMT-0400 (Eastern Daylight Time)
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.6</a> on Sun Sep 26 2021 22:39:09 GMT-0400 (Eastern Daylight Time)
 </footer>
 
 <script> prettyPrint(); </script>

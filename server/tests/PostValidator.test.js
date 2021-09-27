@@ -1,5 +1,5 @@
 const fsPromises = require('fs').promises
-const PostService = require('../services/PostService')
+const PostService = require('../services/postService')
 const connectDB = require('../loaders/db')
 const Doc = require('../models/doc')
 const Header = require('../models/header')
@@ -124,7 +124,7 @@ describe('validating cellSect posts', () => {
       ],
       user: { id: userID }
     }    
-    await expect(new PostService(Doc).post(props)).rejects.toThrow(new Error('Doc validation failed: dataRows.0.dataCells.0.cellSects.0.phraseOrValue: SearchOrInputMethod must be defined'))
+    await expect(new PostService(Doc).post(props)).rejects.toThrow(new Error('Doc validation failed: dataRows.0.dataCells.0.cellSects.0.phraseOrValue: The inclusion of this property requires a searchOrInputMethod'))
   })
   test('rejects if there is a "phraseOrValue" when the "searchOrInputMethod" is "today"', async () => {
     const props = {
@@ -143,7 +143,7 @@ describe('validating cellSect posts', () => {
       ],
       user: { id: userID }
     }    
-    await expect(new PostService(Doc).post(props)).rejects.toThrow(new Error('Doc validation failed: dataRows.0.dataCells.0.cellSects.0.phraseOrValue: SearchOrInputMethod cannot be "today"'))
+    await expect(new PostService(Doc).post(props)).rejects.toThrow(new Error('Doc validation failed: dataRows.0.dataCells.0.cellSects.0.phraseOrValue: PhraseOrValue cannot be included when the searchOrInputMethod is "today"'))
   })
   test('rejects if there is an "appendChars" when there is no "searchOrInputMethod"', async () => {
     const props = {
@@ -161,7 +161,7 @@ describe('validating cellSect posts', () => {
       ],
       user: { id: userID }
     }    
-    await expect(new PostService(Doc).post(props)).rejects.toThrow(new Error('Doc validation failed: dataRows.0.dataCells.0.cellSects.0.appendChars: SearchOrInputMethod must be defined'))
+    await expect(new PostService(Doc).post(props)).rejects.toThrow(new Error('Doc validation failed: dataRows.0.dataCells.0.cellSects.0.appendChars: The inclusion of this property requires a searchOrInputMethod'))
   })
   test('rejects if there is a "dateFormat" when there is no "searchOrInputMethod"', async () => {
     const props = {
@@ -179,7 +179,7 @@ describe('validating cellSect posts', () => {
       ],
       user: { id: userID }
     }    
-    await expect(new PostService(Doc).post(props)).rejects.toThrow(new Error('Doc validation failed: dataRows.0.dataCells.0.cellSects.0.dateFormat: SearchOrInputMethod must be defined'))
+    await expect(new PostService(Doc).post(props)).rejects.toThrow(new Error('Doc validation failed: dataRows.0.dataCells.0.cellSects.0.dateFormat: The inclusion of this property requires a searchOrInputMethod'))
   })
   test('rejects if there is a "dateFormat" containing characters other than the following: "Y", "M", "D", " ", "/", "-"', async () => {
     const props = {

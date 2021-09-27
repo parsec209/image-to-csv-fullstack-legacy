@@ -73,17 +73,25 @@ describe('GET /api/headers/:id', () => {
     const header = await agent
       .get(`/api/headers/${headerID}`)
     expect(header.body).toHaveProperty('name')
+    expect(header.body).toHaveProperty('_id')
     expect(header.body).toHaveProperty('cells')
     expect(header.body).toHaveProperty('user')
+    expect(header.body).toHaveProperty('__v')
     expect(header.statusCode).toBe(200)
   })
-  test('throws error if header ID not found', async () => {
+  test('handles request parameter validation error', async () => {
+    const header = await agent
+      .get('/api/headers/A')
+    expect(header.body).toStrictEqual({ 'message': 'Request paramater error: "value" with value "A" fails to match the required pattern: /^[a-z0-9]+$/', 'status': 'fail' })
+    expect(header.statusCode).toBe(400)
+  })
+  test('handles header not found error', async () => {
     const header = await agent
       .get(`/api/headers/${new mongoose.Types.ObjectId()}`)
     expect(header.body).toStrictEqual({'message': 'No header found with that ID', 'status': 'fail'})
     expect(header.statusCode).toBe(404)
   })
-  test('throws error if not authorized to access header', async () => {
+  test('handles unauthorized error', async () => {
     const newAgent = request.agent(app)
     const newCreds = { username: uuidv4(), email: `${uuidv4()}@test.com`, password: '11111Aab', confirmedPassword: '11111Aab', invitationCode: process.env.INVITATION_CODE }
     await request(app)
@@ -96,6 +104,12 @@ describe('GET /api/headers/:id', () => {
       .get(`/api/headers/${headerID}`)
     expect(header.body).toStrictEqual({'message': 'Not authorized to access header', 'status': 'fail'})
     expect(header.statusCode).toBe(403)
+  })
+  test('handles cast error for request param', async () => {
+    const header = await agent
+      .get('/api/headers/abc123')
+    expect(header.body).toStrictEqual({ 'message': 'Cast to ObjectId failed for value "abc123" (type string) at path "_id" for model "Header"', 'status': 'fail' })
+    expect(header.statusCode).toBe(500)
   })
 })
 
@@ -110,43 +124,38 @@ describe('POST /api/headers', () => {
     expect(header.body).toHaveProperty('name')
     expect(header.body).toHaveProperty('cells')
     expect(header.body).toHaveProperty('user')
+    expect(header.body).toHaveProperty('_id')
+    expect(header.body).toHaveProperty('__v')
     expect(header.statusCode).toBe(200)
   })
-  test('handles service errors (i.e. invalid cells length)', async () => {
+  test('handles request body validation error (i.e. invalid cells length)', async () => {
     const name = 'invalidPostTest'
     const cells = []
     const header = await agent
       .post('/api/headers')
       .send({ name, cells })
-    expect(header.body).toStrictEqual({'message': 'Header validation failed: cells: Must have between one and 52 header cells', 'status': 'error'})
-    expect(header.statusCode).toBe(500)
+    expect(header.body).toStrictEqual({'message': 'Request body error: "cells" must contain at least 1 items', 'status': 'fail'})
+    expect(header.statusCode).toBe(400)
   })
-  
-  describe('handles Express validation errors', () => {
-    test('handles invalid cells format', async () => {
-      const name = 'invalidPostTest'
-      const cells = [{ value: 0 }]
-      const header = await agent
-        .post('/api/headers')
-        .send({ name, cells })
-      expect(header.body).toStrictEqual({'message': 'cells must be an array containing one or more objects formatted as { "_id": "string", "value": "string" } (_id is optional)', 'status': 'fail'})
-      expect(header.statusCode).toBe(400)
-    })
-    test('rejects if name is invalid data type', async () => {
-      const name = 0
-      const cells = [{ value: 'cell' }]
-      const header = await agent
-        .post('/api/headers')
-        .send({ name, cells })
-      expect(header.body).toStrictEqual({'message': 'Missing string in request body: name', 'status': 'fail'})
-      expect(header.statusCode).toBe(400)
-    })
+  test('handles duplicate header name error', async () => {
+    const name = 'nameDupTest'
+    const cells = [{ value: 'cell' }]
+    await agent
+      .post('/api/headers')
+      .send({ name, cells })
+    const name2 = 'nameDupTest'
+    const cells2 = [{ value: 'cell' }]
+    const header2 = await agent
+      .post('/api/headers')
+      .send({ name: name2, cells: cells2 })
+    expect(header2.body).toStrictEqual({'message': 'The following name has already been used: nameDupTest', 'status': 'fail'})
+    expect(header2.statusCode).toBe(500)
   })
 })
 
 
 describe('PUT /api/headers/:id', () => {  
-  test('updates header and responds with header object (optional mongoose ids in header cells)', async () => {
+  test('updates header and responds with header object', async () => {
     const name = 'updateTest'
     const cells = [
       { value: 'newHeaderCell1' },
@@ -160,7 +169,7 @@ describe('PUT /api/headers/:id', () => {
     expect(header.body.cells[1].value).toBe('newHeaderCell2')
     expect(header.statusCode).toBe(200)
   })
-  test('handles service errors (i.e. duplicate cell values)', async () => {
+  test('handles request body validation error (i.e. duplicate cell values)', async () => {
     const name = 'invalidUpdateTest'
     const cells = [
       { value: 'newHeaderCell' },
@@ -169,7 +178,33 @@ describe('PUT /api/headers/:id', () => {
     const header = await agent
       .put(`/api/headers/${headerID}`)
       .send({ name, cells })
-    expect(header.body).toStrictEqual({'message': 'Header validation failed: cells: Duplicate header cell values not allowed', 'status': 'error'})
+    expect(header.body).toStrictEqual({'message': 'Request body error: "cells[1]" contains a duplicate value', 'status': 'fail'})
+    expect(header.statusCode).toBe(400)
+  })
+  test('handles duplicate header name error', async () => {
+    const name = 'nameDupTest'
+    const cells = [{ value: 'cell' }]
+    await agent
+      .post('/api/headers/')
+      .send({ name, cells })
+    const name2 = 'nameDupTest'
+    const cells2 = [{ value: 'cell' }]
+    const header2 = await agent
+      .put(`/api/headers/${headerID}`)
+      .send({ name: name2, cells: cells2 })
+    expect(header2.body).toStrictEqual({'message': 'The following name has already been used: nameDupTest', 'status': 'fail'})
+    expect(header2.statusCode).toBe(500)
+  })
+  test('handles cast error for header cell ID', async () => {
+    const name = 'updateTest'
+    const cells = [
+      { value: 'newHeaderCell11' },
+      { _id: 'invalid', value: 'newHeaderCell22' }
+    ]
+    const header = await agent
+      .put(`/api/headers/${headerID}`)
+      .send({ name, cells })
+    expect(header.body).toStrictEqual({'message': 'Header validation failed: cells.1._id: Cast to ObjectId failed for value "invalid" (type string) at path "_id"', 'status': 'fail'})
     expect(header.statusCode).toBe(500)
   })
 })
@@ -182,7 +217,15 @@ describe('DELETE /api/headers/:id', () => {
     expect(header.body).toHaveProperty('name')
     expect(header.body).toHaveProperty('cells')
     expect(header.body).toHaveProperty('user')
+    expect(header.body).toHaveProperty('_id')
+    expect(header.body).toHaveProperty('__v')
     expect(header.statusCode).toBe(200)
+  })
+  test('handles request parameter validation error', async () => {
+    const header = await agent
+      .delete('/api/headers/A')
+    expect(header.body).toStrictEqual({ 'message': 'Request paramater error: "value" with value "A" fails to match the required pattern: /^[a-z0-9]+$/', 'status': 'fail' })
+    expect(header.statusCode).toBe(400)
   })
 })
 

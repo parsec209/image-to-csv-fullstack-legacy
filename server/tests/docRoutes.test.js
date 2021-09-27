@@ -72,18 +72,20 @@ describe('GET /api/docs/:id', () => {
   test('responds with doc', async () => {
     const doc = await agent
       .get(`/api/docs/${docID}`)
+    expect(doc.body).toHaveProperty('_id')
     expect(doc.body).toHaveProperty('name')
     expect(doc.body).toHaveProperty('idPhrase')
     expect(doc.body).toHaveProperty('header')
     expect(doc.body).toHaveProperty('dataRows')
     expect(doc.body).toHaveProperty('user')
+    expect(doc.body).toHaveProperty('__v')
     expect(doc.statusCode).toBe(200)
   })
-  test('throws error if doc ID not found', async () => {
+  test('handles request parameter validation error', async () => {
     const doc = await agent
-      .get(`/api/docs/${new mongoose.Types.ObjectId()}`)
-    expect(doc.body).toStrictEqual({'message': 'No doc found with that ID', 'status': 'fail'})
-    expect(doc.statusCode).toBe(404)
+      .get('/api/docs/A')
+    expect(doc.body).toStrictEqual({ 'message': 'Request paramater error: "value" with value "A" fails to match the required pattern: /^[a-z0-9]+$/', 'status': 'fail' })
+    expect(doc.statusCode).toBe(400)
   })
   test('throws error if not authorized to access doc', async () => {
     const newAgent = request.agent(app)
@@ -99,24 +101,27 @@ describe('GET /api/docs/:id', () => {
     expect(doc.body).toStrictEqual({'message': 'Not authorized to access doc', 'status': 'fail'})
     expect(doc.statusCode).toBe(403)
   })
+  test('throws error if doc ID not found', async () => {
+    const doc = await agent
+      .get(`/api/docs/${new mongoose.Types.ObjectId()}`)
+    expect(doc.body).toStrictEqual({'message': 'No doc found with that ID', 'status': 'fail'})
+    expect(doc.statusCode).toBe(404)
+  })
+  test('handles cast error for request param', async () => {
+    const doc = await agent
+      .get('/api/docs/abc123')
+    expect(doc.body).toStrictEqual({ 'message': 'Cast to ObjectId failed for value "abc123" (type string) at path "_id" for model "Doc"', 'status': 'fail' })
+    expect(doc.statusCode).toBe(500)
+  })
 })
 
 
 describe('POST /api/docs', () => {
   test('posts doc and responds with doc object', async () => {
-    const name = 'postTest'
-    const idPhrase = 'postPhrase123'
-    const header = [{ value: 'headercell' }]
-    const dataRows = [
-      { dataCells: [ 
-        { cellSects: 
-          [{}]
-        }
-      ]}
-    ]
     const doc = await agent
       .post('/api/docs')
-      .send({ name, idPhrase, header, dataRows })
+      .send({ name: 'validPostTest', idPhrase: 'postPhrase896342', header: [{ value: 'headercell' }], dataRows: [{ dataCells: [{ cellSects: [{}]}]}]})
+    expect(doc.body).toHaveProperty('_id')
     expect(doc.body).toHaveProperty('name')
     expect(doc.body).toHaveProperty('idPhrase')
     expect(doc.body).toHaveProperty('header')
@@ -124,99 +129,44 @@ describe('POST /api/docs', () => {
     expect(doc.body).toHaveProperty('user')
     expect(doc.statusCode).toBe(200)
   })
-  test('handles service errors (i.e. invalid cellSects length)', async () => {
-    const name = 'invalidTest'
-    const idPhrase = 'postPhrase'
-    const header = [{ value: 'headercell' }]
-    const dataRows = [
-      { dataCells: [ 
-        { cellSects: 
-          []
-        }
-      ]}
-    ]
+  test('handles request body validation error  (i.e. invalid cellSects length)', async () => {
     const doc = await agent
       .post('/api/docs')
-      .send({ name, idPhrase, header, dataRows })
-    expect(doc.body).toStrictEqual({'message': 'Doc validation failed: dataRows.0.dataCells.0.cellSects: Must have between one and four cell sections per data cell', 'status': 'error'})
-    expect(doc.statusCode).toBe(500)
+      .send({ name: 'invalidReqTest', idPhrase: 'postPhrase83314670', header: [{ value: 'headercell' }], dataRows: [{ dataCells: [{ cellSects: []}]}]})
+    expect(doc.body).toStrictEqual({'message': 'Request body error: "dataRows[0].dataCells[0].cellSects" does not contain 1 required value(s)', 'status': 'fail'})
+    expect(doc.statusCode).toBe(400)
   }) 
-  
-  describe('handles Express validation errors', () => {
-    test('handles invalid name', async () => {
-      const name = 0
-      const idPhrase = 'postPhrase'
-      const header = [{ value: 'headercell' }]
-      const dataRows = [
-        { dataCells: [ 
-          { cellSects: 
-            [{}]
-          }
-        ]}
-      ]
-      const doc = await agent
-        .post('/api/docs')
-        .send({ name, idPhrase, header, dataRows })
-      expect(doc.body).toStrictEqual({'message': 'Missing string in request body: name', 'status': 'fail'})
-      expect(doc.statusCode).toBe(400)
-    })
-    test('handles invalid idPhrase', async () => {
-      const name = 'postTest'
-      const idPhrase = 0
-      const header = [{ value: 'headercell' }]
-      const dataRows = [
-        { dataCells: [ 
-          { cellSects: 
-            [{}]
-          }
-        ]}
-      ]
-      const doc = await agent
-        .post('/api/docs')
-        .send({ name, idPhrase, header, dataRows })
-      expect(doc.body).toStrictEqual({'message': 'Missing string in request body: idPhrase', 'status': 'fail'})
-      expect(doc.statusCode).toBe(400)
-    })
-    test('handles invalid header', async () => {
-      const name = 'postTest'
-      const idPhrase = 'postPhrase'
-      const header = [0]
-      const dataRows = [
-        { dataCells: [ 
-          { cellSects: 
-            [{}]
-          }
-        ]}
-      ]
-      const doc = await agent
-        .post('/api/docs')
-        .send({ name, idPhrase, header, dataRows })
-      expect(doc.body).toStrictEqual({'message': 'header must be an array containing one or more objects formatted as { "_id": "string", "value": "string" } (_id is optional)', 'status': 'fail'})
-      expect(doc.statusCode).toBe(400)
-    })
-    test('handles invalid dataRows', async () => {
-      const name = 'postTest'
-      const idPhrase = 'postPhrase'
-      const header = [{ value: 'headercell' }]
-      const dataRows = [
-        { dataCells: [ 
-          { invalidProperty: 
-            [{}]
-          }
-        ]}
-      ]
-      const doc = await agent
-        .post('/api/docs')
-        .send({ name, idPhrase, header, dataRows })
-      expect(doc.body).toStrictEqual({'message': 'dataRows must be an array containing one or more objects formatted as { "_id": "string", "dataCells": [{ "_id": "string", "cellSects": [Object] }]} (_id is optional)', 'status': 'fail'})
-      expect(doc.statusCode).toBe(400)
-    })
+  test('handles duplicate doc name error', async () => {
+    const existingDoc = await agent.get(`/api/docs/${docID}`)
+    const existingName = existingDoc.body.name
+    const doc2 = await agent
+      .post('/api/docs')
+      .send({ name: existingName, idPhrase: 'postPhrase87231543', header: [{ value: 'headercell' }], dataRows: [{ dataCells: [{ cellSects: [{}]}]}]})
+    expect(doc2.body).toStrictEqual({'message': `The following name has already been used: ${existingName}`, 'status': 'fail'})
+    expect(doc2.statusCode).toBe(500)
+  })
+  test('handles duplicate id phrase error', async () => {
+    const existingDoc = await agent.get(`/api/docs/${docID}`)
+    const existingIDPhrase = existingDoc.body.idPhrase
+    const doc2 = await agent
+      .post('/api/docs')
+      .send({ name: 'dupIDPostTest', idPhrase: existingIDPhrase, header: [{ value: 'headercell' }], dataRows: [{ dataCells: [{ cellSects: [{}]}]}]})
+    expect(doc2.body).toStrictEqual({'message': `The following ID phrase has already been used: ${existingIDPhrase}`, 'status': 'fail'})
+    expect(doc2.statusCode).toBe(500)
+  })
+  test('handles post validation error', async () => {
+    const cellSect = { searchOrInputMethod: 'today', phraseOrValue: 'sectPhrase' }
+    const doc = await agent
+      .post('/api/docs')
+      .send({ name: 'postValidationErr', idPhrase: 'postPhrase521009642', header: [{ value: 'headercell' }], dataRows: [{ dataCells: [{ cellSects: [cellSect]}]}]})
+    expect(doc.body).toStrictEqual({'message': 'Doc validation failed: dataRows.0.dataCells.0.cellSects.0.phraseOrValue: PhraseOrValue cannot be included when the searchOrInputMethod is "today"', 'status': 'fail'})
+    expect(doc.statusCode).toBe(500)
   })
 })
 
 
 describe('PUT /api/docs/:id', () => {  
-  test('updates doc and responds with doc object (optional mongoose ids in header cells, data rows, and data cells)', async () => {
+  test('updates doc and responds with doc object (optional object ids in header cells, data rows, and data cells)', async () => {
     const name = 'GIF.GIF'
     const idPhrase = '564'
     const header = [{ value: 'updatedCell' }, { _id: '5fd92d982fef5c0db40fb918', value: 'updatedCell2' }]
@@ -251,16 +201,45 @@ describe('PUT /api/docs/:id', () => {
     expect(doc.body.dataRows[1].dataCells[1].cellSects[0].searchOrInputMethod).toBe('today')
     expect(doc.statusCode).toBe(200)
   })
-  test('handles service errors (i.e. invalid rows length)', async () => {
-    const name = 'invalidTest'
-    const idPhrase = 'postPhrase'
-    const header = [{ value: 'headercell' }]
-    const dataRows = []
+  test('handles request body validation error (i.e. invalid rows length)', async () => {
     const doc = await agent
-      .post('/api/docs')
-      .send({ name, idPhrase, header, dataRows })
-    expect(doc.body).toStrictEqual({'message': 'Doc validation failed: dataRows: Must have between one and 100 data rows', 'status': 'error'})
+      .put(`/api/docs/${docID}`)
+      .send({ name: 'invalidTest', idPhrase: 'postPhrase', header: [{ value: 'headercell' }], dataRows: [] })
+    expect(doc.body).toStrictEqual({'message': 'Request body error: "dataRows" does not contain 1 required value(s)', 'status': 'fail'})
+    expect(doc.statusCode).toBe(400)
+  })
+  test('handles cast error for ObjectId', async () => {
+    const doc = await agent
+      .put(`/api/docs/${docID}`)
+      .send({ name: 'invalidObjectID', idPhrase: 'postPhrase78555312', header: [{ value: 'headercell' }], dataRows: [{ dataCells: [{ _id: 'abc123', cellSects: [{}]}]}]})
+    expect(doc.body).toStrictEqual({'message': 'Doc validation failed: dataRows.0.dataCells.0._id: Cast to ObjectId failed for value "abc123" (type string) at path "_id"', 'status': 'fail'})
     expect(doc.statusCode).toBe(500)
+  })
+  test('handles duplicate doc name error', async () => {
+    const existingDoc = await agent.get(`/api/docs/${docID}`)
+    const existingName = existingDoc.body.name
+    const newDoc = await agent
+      .post('/api/docs')
+      .send({ name: 'dupNameTest77705318', idPhrase: 'phrase99873456', header: [{ value: 'headercell' }], dataRows: [{ dataCells: [{ cellSects: [{}]}]}]})
+    const newDocID = newDoc.body._id
+    const updated = await agent
+      .put(`/api/docs/${newDocID}`)
+      .send({ name: existingName, idPhrase: 'phrase99873456', header: [{ value: 'headercell' }], dataRows: [{ dataCells: [{ cellSects: [{}]}]}]})
+    expect(updated.body).toStrictEqual({'message': `The following name has already been used: ${existingName}`, 'status': 'fail'})
+    expect(updated.statusCode).toBe(500)
+  })
+  test('handles duplicate id phrase error', async () => {
+    const existingDoc = await agent.get(`/api/docs/${docID}`)
+    const existingIDPhrase = existingDoc.body.idPhrase
+    const newDoc = await agent
+      .post('/api/docs')
+      .send({ name: 'dupIDTest66319907', idPhrase: 'phrase87621453', header: [{ value: 'headercell' }], dataRows: [{ dataCells: [{ cellSects: [{}]}]}]})
+    const newDocID = newDoc.body._id
+    const updated = await agent
+      .put(`/api/docs/${newDocID}`)
+      .send({ name: 'dupIDTest66319907', idPhrase: existingIDPhrase, header: [{ value: 'headercell' }], dataRows: [{ dataCells: [{ cellSects: [{}]}]}]})
+    expect(updated.body).toStrictEqual({'message': `The following ID phrase has already been used: ${existingIDPhrase}`, 'status': 'fail'})
+    expect(updated.statusCode).toBe(500)
   })
 })
 
@@ -269,12 +248,19 @@ describe('DELETE /api/docs/:id', () => {
   test('deletes doc and responds with doc object', async () => {
     const doc = await agent
       .delete(`/api/docs/${docID}`)
+      expect(doc.body).toHaveProperty('_id')
       expect(doc.body).toHaveProperty('name')
       expect(doc.body).toHaveProperty('idPhrase')
       expect(doc.body).toHaveProperty('header')
       expect(doc.body).toHaveProperty('dataRows')
       expect(doc.body).toHaveProperty('user')
       expect(doc.statusCode).toBe(200)
+  })
+  test('handles request parameter validation error', async () => {
+    const doc = await agent
+      .delete('/api/docs/A')
+    expect(doc.body).toStrictEqual({ 'message': 'Request paramater error: "value" with value "A" fails to match the required pattern: /^[a-z0-9]+$/', 'status': 'fail' })
+    expect(doc.statusCode).toBe(400)
   })
 })
 

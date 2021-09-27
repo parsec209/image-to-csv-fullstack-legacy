@@ -12,8 +12,6 @@ connectDB()
     const app = setupApp(dbConnection)
     app.listen(port, () => logger.log({ level: 'info', message: `Server started on port ${port}` }))
 
-
-    //other mongoose connection events
     dbConnection.on('disconnected', () => {
       logger.log({ level: 'error', message: `User ${dbConnection.id} disconnected from database` })
     })

@@ -1,5 +1,5 @@
 const fsPromises = require('fs').promises
-const PostService = require('../services/PostService')
+const PostService = require('../services/postService')
 const connectDB = require('../loaders/db')
 const Doc = require('../models/doc')
 const Header = require('../models/header')

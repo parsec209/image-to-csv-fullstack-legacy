@@ -2,7 +2,7 @@ const {Storage} = require('@google-cloud/storage')
 const storage = new Storage()
 const bucket = storage.bucket(process.env.STORAGE_BUCKET)
 const mongoose = require('mongoose')
-const CSVWriter = require('../services/CSVWriter')
+const { getConsolidatedBlueprints, writeCSVFiles} = require('../services/CSVWriter')
 const { v4: uuidv4 } = require('uuid')
 
 
@@ -80,8 +80,7 @@ afterAll(async () => {
 
 describe('consolidating blueprints', () => {
   test('consolidates blueprints that share identical header values', () => {
-    const csvWriter = new CSVWriter(new mongoose.Types.ObjectId(), uuidv4(), CSVBlueprints)
-    const received = csvWriter.getConsolidatedBlueprints()
+    const received = getConsolidatedBlueprints(CSVBlueprints)
     expect(JSON.stringify(received)).toBe(JSON.stringify(consolidatedBlueprints))
   })
 })
@@ -89,10 +88,11 @@ describe('consolidating blueprints', () => {
   
 describe('writing CSV files and uploading them to GCP', () => {
   test('CSV files are written from consolidatedBlueprints and uploaded to storage bucket', async () => {
-    const csvWriter = new CSVWriter(new mongoose.Types.ObjectId(), uuidv4(), CSVBlueprints)
+    const userID = new mongoose.Types.ObjectId()
+    const fileBatchID = uuidv4()
     const filesAreInCloud = (files) => {
       return Promise.all(files.map(async (file, index) => {
-        const cloudFile = bucket.file(`${csvWriter.userID}/downloads/${csvWriter.fileBatchID}/${index}.csv`)
+        const cloudFile = bucket.file(`${userID}/downloads/${fileBatchID}/${index}.csv`)
         const exists = await cloudFile.exists()
         return exists[0] 
       }))
@@ -100,7 +100,7 @@ describe('writing CSV files and uploading them to GCP', () => {
         return (result.includes(false) ? false : true)
       })
     }
-    await expect(csvWriter.writeCSVFiles(consolidatedBlueprints)).resolves.not.toThrow()
+    await expect(writeCSVFiles(consolidatedBlueprints, userID, fileBatchID)).resolves.not.toThrow()
     await expect(filesAreInCloud(consolidatedBlueprints)).resolves.toBe(true)
   })
 })

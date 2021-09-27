@@ -1,17 +1,19 @@
 /**
- * Uploader module
- * @module Uploader
+ * uploader module
+ * @module uploader
  */
 
 const {Storage} = require('@google-cloud/storage')
 const storage = new Storage()
 const bucket = storage.bucket(process.env.STORAGE_BUCKET)
 const checkFileType = require('file-type')
-const { validateArgs } = require('../util/ArgsValidator')
-const InputError = require('../util/InputError')
+const { validateArgs, schemas } = require('../util/argsValidator')
+const InputError = require('../util/inputError')
+const Joi = require('joi')
 
 
-// @ts-check
+
+//@ts-check
 
 
 /**
@@ -20,14 +22,18 @@ const InputError = require('../util/InputError')
 class Uploader {
   /**
    * Create an uploader
-   * @param {User} user - User info
-   * @param {string} fileBatchID - Batch ID for files
    * @param {Array<LocalFile>} files - Batch of files to be uploaded
    */
-  constructor (user, fileBatchID, files) {
-    validateArgs(['{username: String,  _id: {toHexString: Function, ...}, ...}', 'String', '[{buffer: Uint8Array, originalname: String, mimetype: String, ...}]'], arguments)
-    this.user = user
-    this.fileBatchID = fileBatchID
+  constructor (files) {
+    validateArgs(arguments, 
+      {
+        0: Joi.array().items(
+          Joi.object({
+            originalname: Joi.string().required()
+          }).unknown().required()
+        )
+      }
+    )
     this.files = files
   }
   
@@ -35,27 +41,30 @@ class Uploader {
   /**
    * Validate file types using their magic numbers
    * @return {Promise<void>}
+   * @throws {InputError} - If file is not TIF, PDF, or GIF
    */
   async checkFileFormats() {
-    const checkedFiles = this.files.map(async function(file) {
+    await Promise.all(this.files.map(async function(file) {
       const fileType = await checkFileType.fromBuffer(file.buffer)
       if (!fileType || !['tif', 'pdf', 'gif'].includes(fileType.ext)) {
-        throw new InputError('File format not supported. Accepted file formats: pdf, gif, tif', 400)
+        throw new InputError('File format not supported. Accepted file formats: pdf, gif, tif', 415)
       } 
-    })
-    await Promise.all(checkedFiles)
+    }))
   }
 
 
   /**
    * Upload files to GCP storage bucket 
+   * @param {User} user - User info
+   * @param {string} fileBatchID - Batch ID for files
    * @return {Promise<void>}
+   * @throws {Error} - Unexpected error during stream
    */
-  async uploadToCloud() {
-    const self = this
-    const uploaded = this.files.map(function(file) {
+  async uploadToCloud(user, fileBatchID) {
+    validateArgs(arguments, { 0: schemas.user, 1: schemas.fileBatchID })
+    await Promise.all(this.files.map(function(file) {
       return new Promise(function(resolve, reject) {
-        const blob = bucket.file(`${self.user._id}/uploads/${self.fileBatchID}/${file.originalname}`)
+        const blob = bucket.file(`${user._id}/uploads/${fileBatchID}/${file.originalname}`)
         const blobStream = blob.createWriteStream({ 
           metadata: { contentType: file.mimetype } 
         })
@@ -67,14 +76,11 @@ class Uploader {
         })
         blobStream.end(file.buffer)
       })
-    })
-    await Promise.all(uploaded)
+    }))
   }
 
 }
 
 
 module.exports = Uploader
-
-
 

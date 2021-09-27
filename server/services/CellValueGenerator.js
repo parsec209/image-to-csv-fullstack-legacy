@@ -1,10 +1,12 @@
 /**
- * CellValueGenerator module - see {@tutorial CellValueGenerator-tutorial}
- * @module CellValueGenerator
+ * cellValueGenerator module - see {@tutorial cellValueGenerator-tutorial}
+ * @module cellValueGenerator
  */
 
 const moment  = require('moment')
-const { validateArgs } = require('../util/ArgsValidator')
+const { validateArgs, schemas } = require('../util/argsValidator')
+const Joi = require('joi')
+
   
 // @ts-check
   
@@ -18,15 +20,10 @@ class CellValueGenerator {
    * @param {DocText} docText - Doc text
    * @param {WordList} wordList - Sorted word list
    * @param {Object} recurringDoc - Mongoose Doc model instance (recurring document)
-   * @param {string} dateToday - Today's date 
+   * @param {string} dateToday - Today's date (per client)
    */
   constructor (docText, wordList, recurringDoc, dateToday) {
-    validateArgs([
-      '{fileName: String, extraction: Array}',
-      '{fileName: String, words: [Array]}', 
-      '{_id: Object, name: String, idPhrase: String, header: Array, dataRows: Array, user: Object, ...}', 
-      'String'
-    ], arguments)
+    validateArgs(arguments, { 0: schemas.docText, 1: schemas.wordList, 2: schemas.recurringDoc, 3: Joi.date() })
     this.docText = docText
     this.wordList = wordList
     this.recurringDoc = recurringDoc
@@ -37,11 +34,11 @@ class CellValueGenerator {
   /**
    * Determines how much space must exist between two words to define a phrase break
    * @param {AnnotateImageResponseWord} currentWord - word from sorted word list  
-   * @param {AnnotateImageResponseWord} nextWord - immediate next word from sorted word list
+   * @param {AnnotateImageResponseWord} nextWord - next immediate word from sorted word list
    * @returns {boolean} - true if phrase break requirement is met, false otherwise
    */
   isPhraseBreak(currentWord, nextWord) {
-    validateArgs(['{symbols: Array, boundingBox: Object, confidence: Number, ...}', '{symbols: Array, boundingBox: Object, confidence: Number, ...}'], arguments)
+    validateArgs(arguments, { 0: schemas.word, 1: schemas.word })
     const currentWordVertices = currentWord.boundingBox.vertices.length ? currentWord.boundingBox.vertices : currentWord.boundingBox.normalizedVertices 
     const nextWordVertices = nextWord.boundingBox.vertices.length ? nextWord.boundingBox.vertices : nextWord.boundingBox.normalizedVertices 
     const currentWordEnd = currentWordVertices[1].x 
@@ -61,7 +58,7 @@ class CellValueGenerator {
    * @returns {AnchorPhraseIndeces} - Anchor phrase indeces
    */
   findAnchorPhrase(anchorPhrase) {
-    validateArgs(['String'], arguments)
+    validateArgs(arguments, { 0: Joi.string() })
     let wordListIndeces = {}
     let anchorPhraseIndex = 0
     for (let i = 0; i < this.wordList.words.length; i++) {
@@ -117,7 +114,14 @@ class CellValueGenerator {
    * @returns {Object} - Anchor phrase coords
    */
   getAnchorPhraseCoords(anchorPhraseIndeces) {
-    validateArgs(['{pageIndex: Number, startWordIndex: Number, ...}'], arguments)
+    validateArgs(arguments, 
+      {
+        0: Joi.object({
+          pageIndex: Joi.number().required(),
+          startWordIndex: Joi.number().required()
+        }).unknown()
+      }
+    )
     const { pageIndex, startWordIndex, startSymbolIndex, endWordIndex, endSymbolIndex } = anchorPhraseIndeces
     const page = this.wordList['words'][pageIndex]
     const startSymbolBoundingBox = page[startWordIndex]['symbols'][startSymbolIndex]['boundingBox']
@@ -152,7 +156,7 @@ class CellValueGenerator {
    * @returns {boolean} - Whether strings are on same line
    */
   stringsAreOnSameLine(firstStringVerticalMidPoint, nextStringLowerRightY, nextStringUpperLeftY) {
-    validateArgs(['Number', 'Number', 'Number'], arguments)
+    validateArgs(arguments, { 0: Joi.number(), 1: Joi.number(), 2: Joi.number() })
     if (nextStringLowerRightY > firstStringVerticalMidPoint && nextStringUpperLeftY < firstStringVerticalMidPoint) {
       return true 
     } else {
@@ -165,10 +169,10 @@ class CellValueGenerator {
    * Formats cell section value as a date 
    * @param {string} cellSectValue - CSV cell section value
    * @param {Object} recurringDocCellSect - Recurring doc cell section 
-   * @returns {string} - Cell section value formatted as date
+   * @returns {string} - Date-formatted cell section value, if it is recognized as a date; otherwise empty string
    */
   getFormattedDate(cellSectValue, recurringDocCellSect) {
-    validateArgs(['String', '{searchOrInputMethod: Maybe String, ...}'], arguments)
+    validateArgs(arguments, { 0: Joi.string(), 1: schemas.recurringDocCellSect })   
     const dateFormat = recurringDocCellSect.dateFormat || 'YYYY/MM/DD'
     const daysAdded = recurringDocCellSect.daysAdded || 0
     const formattedDate = moment(cellSectValue).add(daysAdded, 'days').format(dateFormat)
@@ -180,12 +184,12 @@ class CellValueGenerator {
   
   
   /**
-   * Finds cell section value using regular expression. 
+   * Finds cell section value using regular expression
    * @param {Object} recurringDocCellSect - Recurring doc cell section 
-   * @returns {string} - CSV cell section value
+   * @returns {string} - CSV cell section value, if found; otherwise empty string
    */
   getCellSectValueFromPattern(recurringDocCellSect) {
-    validateArgs(['{searchOrInputMethod: Maybe String, ...}'], arguments)
+    validateArgs(arguments, { 0: schemas.recurringDocCellSect })    
     let cellSectValue = ''
     let regEx = new RegExp(recurringDocCellSect.phraseOrValue)
     for (let i = 0; i < this.docText.extraction.length; i++) {
@@ -205,10 +209,10 @@ class CellValueGenerator {
   /**
    * Gets CSV cell section value using anchor phrases
    * @param {Object} recurringDocCellSect - Recurring doc cell section 
-   * @returns {string} - CSV cell section value
+   * @returns {string} - CSV cell section value, if found; otherwise empty string
    */
   getCellSectValueFromPosition(recurringDocCellSect) {
-    validateArgs(['{searchOrInputMethod: Maybe String, ...}'], arguments)
+    validateArgs(arguments, { 0: schemas.recurringDocCellSect })      
     let cellSectValue = ''
     let anchorPhraseIndeces = this.findAnchorPhrase(recurringDocCellSect.phraseOrValue) // { pageIndex, startWordIndex, startSymbolIndex, endWordIndex, endSymbolIndex }
     //returns empty cellSectValue if anchor phrase isn't found
@@ -309,12 +313,12 @@ class CellValueGenerator {
      
  
   /**
-   * Gets CSV cell section value using SearchOrInput method; if applicable, will also format as date and append characters 
+   * Gets CSV cell section value using SearchOrInput method; if applicable, will also format cell section value as date and/or append characters 
    * @param {Object} recurringDocCellSect - Recurring doc cell section 
-   * @returns {string} - CSV cell section value
+   * @returns {string} - CSV cell section value; if pattern or anchor phrases are the methods, and sect value not found, empty string is returned
    */
   getCellSectValue(recurringDocCellSect) {
-    validateArgs(['{searchOrInputMethod: Maybe String, ...}'], arguments)
+    validateArgs(arguments, { 0: schemas.recurringDocCellSect })  
     let cellSectValue = ''
     if (recurringDocCellSect.searchOrInputMethod === 'pattern') {
       cellSectValue = this.getCellSectValueFromPattern(recurringDocCellSect)
@@ -342,7 +346,13 @@ class CellValueGenerator {
    * @returns {string} - CSV cell value
    */
   getCellValue(recurringDocCell) {
-    validateArgs(['{cellSects: Array, ...}'], arguments)
+    validateArgs(arguments, 
+      {
+        0: Joi.object({
+          cellSects: Joi.array().required()
+        }).unknown()
+      }
+    )       
     const self = this
     let cellValue = ''
     recurringDocCell.cellSects.forEach(recurringDocCellSect => {
@@ -372,7 +382,16 @@ class CellValueGenerator {
    * @returns {Array<Object>} - CSV row data
    */
   getCSVDataRows(CSVHeader) {
-    validateArgs(['[{ id: String, title: String }]'], arguments) 
+    validateArgs(arguments, 
+      {
+        0: Joi.array().items(
+          Joi.object({
+            id: Joi.string().required(),
+            title: Joi.string().required()
+          }).required()
+        )
+      }
+    )       
     const self = this
     const CSVDataRows = []
     this.recurringDoc.dataRows.forEach(recurringDocRow => {

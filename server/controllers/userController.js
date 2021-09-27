@@ -1,21 +1,32 @@
 const User = require('../models/user')
 const { generateToken, addTokenToUser, sendResetEmail, getTokenUser, passwordReset, sendConfEmail } = require('../services/PasswordReset')
-const InputError = require('../util/InputError')
+const InputError = require('../util/inputError')
+const Joi = require('joi')
+const { validateReqBody, validateReqParams, schemas } = require('../util/argsValidator')
+
+
 
 
 module.exports = {
 
 
   register: async (req, res, next) => {
-    let { username, email, password, invitationCode } = req.body  
     try {
-      const newUser = new User({ username, email })
-      if (invitationCode === process.env.INVITATION_CODE) {
-        await User.register(newUser, password)
-        return res.json(newUser)
-      } else {
+      const { username, email, password, invitationCode } = validateReqBody(req.body, 
+        {
+          username: Joi.string().trim().required(),
+          email: Joi.string().trim().email().required(),
+          password: schemas.password.required(),
+          confirmedPassword: Joi.any().valid(Joi.ref('password')).required(),
+          invitationCode: Joi.string().required()
+        }
+      )
+      if (invitationCode !== process.env.INVITATION_CODE) {
         throw new InputError('Must supply valid invitation code to register', 401)
-      } 
+      }
+      const newUser = new User({ username, email })
+      await User.register(newUser, password)
+      return res.json({ _id: newUser._id, username, email })
     } catch (err) { 
       return next(err)
     }
@@ -34,13 +45,14 @@ module.exports = {
 
 
   getUser: (req, res, next) => {
-    return res.json(req.user)
+    const { _id, username, email } = req.user
+    return res.json({ _id, username, email })
   },
 
 
   sendPasswordResetLink: async (req, res, next) => {
-    const email = req.body.email
     try {
+      const { email } = validateReqBody(req.body, { email: Joi.string().trim().email().required() })
       const token = await generateToken()
       await addTokenToUser(email, token)
       await sendResetEmail(email, token)
@@ -52,9 +64,14 @@ module.exports = {
 
   
   resetPassword: async (req, res, next) => {
-    const { password } = req.body
-    const token = req.params.token
     try {
+      const token = validateReqParams(req.params.token)
+      const { password } = validateReqBody(req.body, 
+        {
+          password: schemas.password.required(),
+          confirmedPassword: Joi.any().valid(Joi.ref('password')).required()
+        }
+      )
       const tokenUser = await getTokenUser(token)
       await passwordReset(tokenUser, password)
       await sendConfEmail(tokenUser.email)
@@ -64,11 +81,17 @@ module.exports = {
     }
   },
 
-  
+
   changePassword: async (req, res, next) => {
-    const { oldPassword, password } = req.body
-    const user = req.user
     try {
+      const user = req.user
+      const { oldPassword, password } = validateReqBody(req.body, 
+        {
+          oldPassword: Joi.string().required(),
+          password: schemas.password.disallow(Joi.ref('oldPassword')).required(),
+          confirmedPassword: Joi.any().valid(Joi.ref('password')).required()
+        }
+      )
       await user.changePassword(oldPassword, password)
       await sendConfEmail(user.email)
       return res.end()

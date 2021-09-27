@@ -7,7 +7,7 @@ const fsPromises = require('fs').promises
 const {Storage} = require('@google-cloud/storage')
 const storage = new Storage()
 const bucket = storage.bucket(process.env.STORAGE_BUCKET)
-const Uploader = require('../services/Uploader')
+const Uploader = require('../services/uploader')
 const User = require('../models/user')
 const multer = require('multer')
 const localUpload = multer({ storage: multer.memoryStorage() }).fields([{ name: 'valid' }, { name: 'invalid' }])
@@ -62,12 +62,9 @@ afterAll(async () => {
 })
 
 
-describe('instantiating Uploader', () => {
-  test('initializes constructor', async () => {
-    const user = await getUser()
-    const uploader = new Uploader(user, uuidv4(), reqFiles.valid)
-    expect(uploader.user).toBeTruthy()
-    expect(uploader.fileBatchID).toBeTruthy()
+describe('instantiating Uploader', function() {
+  test('initializes constructor', function() {
+    const uploader = new Uploader(reqFiles.valid)
     expect(uploader.files).toBeTruthy()
   })
 })
@@ -75,13 +72,11 @@ describe('instantiating Uploader', () => {
 
 describe('validating file formats', () => {
   test('accepts valid formats', async () => {
-    const user = await getUser()
-    const uploader = new Uploader(user, uuidv4(), reqFiles.valid)
+    const uploader = new Uploader(reqFiles.valid)
     await expect(uploader.checkFileFormats()).resolves.not.toThrow()
   })
   test('rejects invalid formats', async () => {
-    const user = await getUser()
-    const uploader = new Uploader(user, uuidv4(), reqFiles.invalid)
+    const uploader = new Uploader(reqFiles.invalid)
     await expect(uploader.checkFileFormats()).rejects.toThrow('File format not supported. Accepted file formats: pdf, gif, tif')
   })
 })
@@ -90,10 +85,11 @@ describe('validating file formats', () => {
 describe('uploading files to GCP', () => {
   test('streams buffers to storage bucket', async () => {
     const user = await getUser()
-    const uploader = new Uploader(user, uuidv4(), reqFiles.valid)
+    const fileBatchID = uuidv4()
+    const uploader = new Uploader(reqFiles.valid)
     const filesAreInCloud = (files) => {
       return Promise.all(files.map(async file => {
-        const cloudFile = bucket.file(`${uploader.user._id}/uploads/${uploader.fileBatchID}/${file.originalname}`)
+        const cloudFile = bucket.file(`${user._id}/uploads/${fileBatchID}/${file.originalname}`)
         const exists = await cloudFile.exists()
         return exists[0] 
       }))
@@ -101,7 +97,7 @@ describe('uploading files to GCP', () => {
         return (result.includes(false) ? false : true)
       })
     }
-    await expect(uploader.uploadToCloud()).resolves.not.toThrow()
+    await expect(uploader.uploadToCloud(user, fileBatchID)).resolves.not.toThrow()
     await expect(filesAreInCloud(reqFiles.valid)).resolves.toBe(true)
   })
 })

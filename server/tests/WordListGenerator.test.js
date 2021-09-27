@@ -1,5 +1,5 @@
 const fsPromises = require('fs').promises
-const WordListGenerator = require('../services/WordListGenerator')
+const { getWordList, sortWordList } = require('../services/wordListGenerator')
 
 
 
@@ -29,21 +29,13 @@ beforeAll(async () => {
 })
 
 
-describe('instantiates WordListGenerator', () => {
-  test('initializes constructor', () => {
-    const wordListGenerator = new WordListGenerator(docTextPDF)
-    expect(wordListGenerator.docText).toBeTruthy()
-  })
-})
-
-
 describe('getting word list', () => {
   test('gets words from a multi-page document including a blank page (PDF_editable.pdf)', () => {
-    const actualWords = new WordListGenerator(docTextPDF).getWordList()
+    const actualWords = getWordList(docTextPDF)
     expect(JSON.stringify(actualWords)).toBe(JSON.stringify(modelWordListPDF))
   })
   test('gets words from single page document (GIF.GIF)', () => {
-    const actualWords = new WordListGenerator(docTextGIF).getWordList()
+    const actualWords = getWordList(docTextGIF)
     expect(JSON.stringify(actualWords)).toBe(JSON.stringify(modelWordListGIF))
   })
 })
@@ -52,12 +44,12 @@ describe('getting word list', () => {
 describe('sorting word list', () => {
   test('sorts word list (PDF_editable.pdf)', () => {
     const wordList = modelWordListPDF
-    new WordListGenerator(docTextPDF).sortWordList(wordList)
+    sortWordList(wordList)
     expect(JSON.stringify(wordList)).toBe(JSON.stringify(modelSortedWordListPDF))
   })
   test('sorts word list (GIF.GIF)', () => {
     const wordList = modelWordListGIF
-    new WordListGenerator(docTextGIF).sortWordList(wordList)
+    sortWordList(wordList)
     expect(JSON.stringify(wordList)).toBe(JSON.stringify(modelSortedWordListGIF))
   })
 })

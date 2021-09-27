@@ -1,13 +1,13 @@
 const mongoose = require('mongoose')
 const headerCellSchema = require('./headerCell')
-const { headerHasNoDuplicates, headerMeetsRequiredLength } = require('../util/PostValidator')
+const { headerHasNoDuplicates, headerMeetsRequiredLength } = require('../util/postValidator')
 
 
 const headerSchema = new mongoose.Schema({
   name: {
     type: String,
     required: true,
-    unique: true 
+    maxLength: 100
   }, 
   cells: {
     type: [headerCellSchema],

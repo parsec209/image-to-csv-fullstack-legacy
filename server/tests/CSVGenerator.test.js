@@ -3,12 +3,13 @@ const {Storage} = require('@google-cloud/storage')
 const storage = new Storage()
 const bucket = storage.bucket(process.env.STORAGE_BUCKET)
 const { v4: uuidv4 } = require('uuid')
-const CSVGenerator = require('../services/CSVGenerator')
+const { identifyDocText, compileData } = require('../services/CSVGenerator')
 const connectDB = require('../loaders/db')
 const mongoose = require('mongoose')
-const PostService = require('../services/PostService')
 const Doc = require('../models/doc')
 const User = require('../models/user')
+const PostService = require('../services/PostService')
+const postService = new PostService(Doc)
 
 
 
@@ -24,7 +25,6 @@ const getUser = async () => {
 
 const getRecurringDocs = async (userID) => {
   const recurringDocsSeed = await fsPromises.readFile(__dirname + '/seeds/database/docs.json')
-  const postService = new PostService(Doc)
   await Promise.all(JSON.parse(recurringDocsSeed).map(async recurringDoc => {
     await postService.post({ ...recurringDoc, user: { id: userID }})
   }))
@@ -52,18 +52,6 @@ afterAll(async () => {
 })
 
 
-describe('instantiating CSVGenerator', () => {
-  test('initializes constructor', async () => {
-    const user = await getUser()
-    const csvGenerator = new CSVGenerator(user, uuidv4(), [1], '2020/01/20')
-    expect(csvGenerator.user).toBeTruthy()
-    expect(csvGenerator.fileBatchID).toBeTruthy()
-    expect(csvGenerator.pageSelections).toBeTruthy()
-    expect(csvGenerator.dateToday).toBeTruthy()
-  })
-})
-
-
 describe('identifying doc text using recurringDoc ID phrase', () => {
 
   let recurringDocs
@@ -84,27 +72,23 @@ describe('identifying doc text using recurringDoc ID phrase', () => {
   })
 
   test('populates only the "unmatchedDocsText" array if docText exists but db contains no recurringDoc phrases', async () => {
-    const csvGenerator = await initCSVGenerator()
-    const received = csvGenerator.identifyDocText([docsText[0]], [])
+    const received = identifyDocText([docsText[0]], [])
     const expected = {'matchedDocsText': [], 'matchedRecurringDocs': [], 'unmatchedDocsText': ['TIFF.tiff']}
     expect(JSON.stringify(Object.entries(received).sort())).toBe(JSON.stringify(Object.entries(expected).sort()))
   })
   test('populates only the "unmatchedDocsText" array if docText exists but there are no matching recurringDoc phrases in db', async () => {
-    const csvGenerator = await initCSVGenerator()
-    const received = csvGenerator.identifyDocText([docsText[0]], recurringDocs)
+    const received = identifyDocText([docsText[0]], recurringDocs)
     const expected = {'matchedDocsText': [], 'matchedRecurringDocs': [], 'unmatchedDocsText': ['TIFF.tiff']}
     expect(JSON.stringify(Object.entries(received).sort())).toBe(JSON.stringify(Object.entries(expected).sort()))
   })
   test('populates "matchedDocsText," "unmatchedDocsText," and "matchedRecurringDocs" if there are both matching and unmatching docs to a recurringDoc phrase', async () => {
-    const csvGenerator = await initCSVGenerator()
     const recurringDoc = recurringDocs.find(recurringDoc => recurringDoc.name === 'GIF.GIF')
-    const received = csvGenerator.identifyDocText(docsText, recurringDocs)
+    const received = identifyDocText(docsText, recurringDocs)
     const expected = {'matchedDocsText': ['GIF.GIF'], 'matchedRecurringDocs': [{ fileName: 'GIF.GIF', recurringDoc }], 'unmatchedDocsText': ['TIFF.tiff']}
     expect(JSON.stringify(Object.entries(received).sort())).toBe(JSON.stringify(Object.entries(expected).sort()))
   })
   test('none of the three arrays populated if docsText is empty', async () => {
-    const csvGenerator = await initCSVGenerator()
-    const received = csvGenerator.identifyDocText([], recurringDocs)
+    const received = identifyDocText([], recurringDocs)
     const expected = {'matchedDocsText': [], 'matchedRecurringDocs': [], 'unmatchedDocsText': []}
     expect(JSON.stringify(Object.entries(received).sort())).toBe(JSON.stringify(Object.entries(expected).sort()))
   })
@@ -147,8 +131,7 @@ describe('generating data from uploads, starting with text extraction and ending
     }
     await bucket.upload(__dirname + '/seeds/uploads/cloud/validExts/blankFile.tiff', options1)
     await bucket.upload(__dirname + '/seeds/uploads/cloud/validExts/TIF.tif', options2)
-    const csvGenerator = new CSVGenerator(user, fileBatchID, [1], '2020/01/20')
-    const successStatus = await csvGenerator.compileData()
+    const successStatus = await compileData(user, fileBatchID, [1], '2020/01/20')
     const expected = {
       identifiedDocs: [],
       unidentifiedDocs: ['blankFile.tiff', 'TIF.tif']
@@ -183,8 +166,7 @@ describe('generating data from uploads, starting with text extraction and ending
     await bucket.upload(__dirname + '/seeds/uploads/cloud/validExts/PDF_editable.pdf', options1)
     await bucket.upload(__dirname + '/seeds/uploads/cloud/validExts/TIF.tif', options2)
     await bucket.upload(__dirname + '/seeds/uploads/cloud/validExts/GIF.GIF', options3)
-    const csvGenerator = new CSVGenerator(user, fileBatchID, [1, 2, 3], '2020/01/20')
-    const successStatus = await csvGenerator.compileData()
+    const successStatus = await compileData(user, fileBatchID, [1, 2, 3], '2020/01/20')
     const expected = {
       identifiedDocs: ['PDF_editable.pdf', 'GIF.GIF'],
       unidentifiedDocs: ['TIF.tif']
@@ -197,9 +179,8 @@ describe('generating data from uploads, starting with text extraction and ending
     const user = await getUser()
     const userID = user._id
     await getRecurringDocs(userID)
-    const fileBatchID = 'wrongBatchID'
-    const csvGenerator = new CSVGenerator(user, fileBatchID, [1, 2, 3], '2020/01/20')
-    const successStatus = await csvGenerator.compileData()
+    const fileBatchID = uuidv4()
+    const successStatus = await compileData(user, fileBatchID, [1, 2, 3], '2020/01/20')
     const expected = {
       identifiedDocs: [],
       unidentifiedDocs: []

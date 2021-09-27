@@ -2,7 +2,7 @@ const connectDB = require('../loaders/db')
 const {Storage} = require('@google-cloud/storage')
 const storage = new Storage()
 const bucket = storage.bucket(process.env.STORAGE_BUCKET)
-const ZipWriter = require('../services/ZipWriter')
+const ZipWriter = require('../services/zipWriter')
 const { v4: uuidv4 } = require('uuid')
 const User = require('../models/user')
 
@@ -66,8 +66,8 @@ describe('creating and providing access to zipped CSV files in GCP', () => {
     expect(JSON.stringify(results.manifest)).toBe(`[["${user._id}/downloads/${fileBatchID}/0.csv","${fileBatchID}/0.csv"],["${user._id}/downloads/${fileBatchID}/1.csv","${fileBatchID}/1.csv"]]`)
   })
   test('throws error during zip creation if incorrect fileBatchID supplied', async () => {
-    const zipWriter = new ZipWriter(user, 'invalidID')
-    await expect(zipWriter.createZip()).rejects.toThrow('Error creating zip file')
+    const zipWriter = new ZipWriter(user, uuidv4())
+    await expect(zipWriter.createZip()).rejects.toThrow('Unable to create zip file due to either file batch ID or CSV files not existing')
   })
   test('url created for zip file download', async () => {
     const zipWriter = new ZipWriter(user, fileBatchID)

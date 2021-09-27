@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>JSDoc: Source: services/Uploader.js</title>
+    <title>JSDoc: Source: services/uploader.js</title>
 
     <script src="scripts/prettify/prettify.js"> </script>
     <script src="scripts/prettify/lang-css.js"> </script>
@@ -17,7 +17,7 @@
 
 <div id="main">
 
-    <h1 class="page-title">Source: services/Uploader.js</h1>
+    <h1 class="page-title">Source: services/uploader.js</h1>
 
     
 
@@ -27,19 +27,21 @@
     <section>
         <article>
             <pre class="prettyprint source linenums"><code>/**
- * Uploader module
- * @module Uploader
+ * uploader module
+ * @module uploader
  */
 
 const {Storage} = require('@google-cloud/storage')
 const storage = new Storage()
 const bucket = storage.bucket(process.env.STORAGE_BUCKET)
 const checkFileType = require('file-type')
-const { validateArgs } = require('../util/ArgsValidator')
-const InputError = require('../util/InputError')
+const { validateArgs, schemas } = require('../util/argsValidator')
+const InputError = require('../util/inputError')
+const Joi = require('joi')
 
 
-// @ts-check
+
+//@ts-check
 
 
 /**
@@ -48,14 +50,18 @@ const InputError = require('../util/InputError')
 class Uploader {
   /**
    * Create an uploader
-   * @param {User} user - User info
-   * @param {string} fileBatchID - Batch ID for files
    * @param {Array&lt;LocalFile>} files - Batch of files to be uploaded
    */
-  constructor (user, fileBatchID, files) {
-    validateArgs(['{username: String,  _id: {toHexString: Function, ...}, ...}', 'String', '[{buffer: Uint8Array, originalname: String, mimetype: String, ...}]'], arguments)
-    this.user = user
-    this.fileBatchID = fileBatchID
+  constructor (files) {
+    validateArgs(arguments, 
+      {
+        0: Joi.array().items(
+          Joi.object({
+            originalname: Joi.string().required()
+          }).unknown().required()
+        )
+      }
+    )
     this.files = files
   }
   
@@ -63,27 +69,30 @@ class Uploader {
   /**
    * Validate file types using their magic numbers
    * @return {Promise&lt;void>}
+   * @throws {InputError} - If file is not TIF, PDF, or GIF
    */
   async checkFileFormats() {
-    const checkedFiles = this.files.map(async function(file) {
+    await Promise.all(this.files.map(async function(file) {
       const fileType = await checkFileType.fromBuffer(file.buffer)
       if (!fileType || !['tif', 'pdf', 'gif'].includes(fileType.ext)) {
-        throw new InputError('File format not supported. Accepted file formats: pdf, gif, tif', 400)
+        throw new InputError('File format not supported. Accepted file formats: pdf, gif, tif', 415)
       } 
-    })
-    await Promise.all(checkedFiles)
+    }))
   }
 
 
   /**
    * Upload files to GCP storage bucket 
+   * @param {User} user - User info
+   * @param {string} fileBatchID - Batch ID for files
    * @return {Promise&lt;void>}
+   * @throws {Error} - Unexpected error during stream
    */
-  async uploadToCloud() {
-    const self = this
-    const uploaded = this.files.map(function(file) {
+  async uploadToCloud(user, fileBatchID) {
+    validateArgs(arguments, { 0: schemas.user, 1: schemas.fileBatchID })
+    await Promise.all(this.files.map(function(file) {
       return new Promise(function(resolve, reject) {
-        const blob = bucket.file(`${self.user._id}/uploads/${self.fileBatchID}/${file.originalname}`)
+        const blob = bucket.file(`${user._id}/uploads/${fileBatchID}/${file.originalname}`)
         const blobStream = blob.createWriteStream({ 
           metadata: { contentType: file.mimetype } 
         })
@@ -95,16 +104,13 @@ class Uploader {
         })
         blobStream.end(file.buffer)
       })
-    })
-    await Promise.all(uploaded)
+    }))
   }
 
 }
 
 
 module.exports = Uploader
-
-
 
 </code></pre>
         </article>
@@ -116,13 +122,13 @@ module.exports = Uploader
 </div>
 
 <nav>
-    <h2><a href="index.html">Img-To-CSV Services</a></h2><h3>Modules</h3><ul><li><a href="module-CellValueGenerator.html">CellValueGenerator</a></li><li><a href="module-CSVGenerator.html">CSVGenerator</a></li><li><a href="module-CSVWriter.html">CSVWriter</a></li><li><a href="module-PasswordReset.html">PasswordReset</a></li><li><a href="module-PostService.html">PostService</a></li><li><a href="module-TextExtractor.html">TextExtractor</a></li><li><a href="module-Uploader.html">Uploader</a></li><li><a href="module-WordListGenerator.html">WordListGenerator</a></li><li><a href="module-ZipWriter.html">ZipWriter</a></li></ul><h3>Classes</h3><ul><li><a href="module-CellValueGenerator-CellValueGenerator.html">CellValueGenerator</a></li><li><a href="module-CSVGenerator-CSVGenerator.html">CSVGenerator</a></li><li><a href="module-CSVWriter-CSVWriter.html">CSVWriter</a></li><li><a href="module-PostService-PostService.html">PostService</a></li><li><a href="module-TextExtractor-TextExtractor.html">TextExtractor</a></li><li><a href="module-Uploader-Uploader.html">Uploader</a></li><li><a href="module-WordListGenerator-WordListGenerator.html">WordListGenerator</a></li><li><a href="module-ZipWriter-ZipWriter.html">ZipWriter</a></li></ul><h3>Tutorials</h3><ul><li><a href="tutorial-CellValueGenerator-tutorial.html">CellValueGenerator</a></li><li><a href="tutorial-CSVGenerator-tutorial.html">CSVGenerator</a></li><li><a href="tutorial-WordListGenerator-tutorial.html">WordListGenerator</a></li></ul><h3><a href="global.html">Global</a></h3>
+    <h2><a href="index.html">Img-To-CSV Services</a></h2><h3>Modules</h3><ul><li><a href="module-cellValueGenerator.html">cellValueGenerator</a></li><li><a href="module-CSVGenerator.html">CSVGenerator</a></li><li><a href="module-CSVWriter.html">CSVWriter</a></li><li><a href="module-passwordReset.html">passwordReset</a></li><li><a href="module-postService.html">postService</a></li><li><a href="module-textExtractor.html">textExtractor</a></li><li><a href="module-uploader.html">uploader</a></li><li><a href="module-wordListGenerator.html">wordListGenerator</a></li><li><a href="module-zipWriter.html">zipWriter</a></li></ul><h3>Classes</h3><ul><li><a href="InputError.html">InputError</a></li><li><a href="module-cellValueGenerator-CellValueGenerator.html">CellValueGenerator</a></li><li><a href="module-postService-PostService.html">PostService</a></li><li><a href="module-uploader-Uploader.html">Uploader</a></li><li><a href="module-zipWriter-ZipWriter.html">ZipWriter</a></li></ul><h3>Tutorials</h3><ul><li><a href="tutorial-cellValueGenerator-tutorial.html">cellValueGenerator</a></li><li><a href="tutorial-CSVGenerator-tutorial.html">CSVGenerator</a></li><li><a href="tutorial-wordListGenerator-tutorial.html">wordListGenerator</a></li></ul><h3><a href="global.html">Global</a></h3>
 </nav>
 
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.6</a> on Wed Aug 18 2021 22:36:30 GMT-0400 (Eastern Daylight Time)
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.6</a> on Sun Sep 26 2021 22:39:09 GMT-0400 (Eastern Daylight Time)
 </footer>
 
 <script> prettyPrint(); </script>

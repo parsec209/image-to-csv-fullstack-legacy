@@ -1,14 +1,16 @@
 const Header = require('../models/header')
-const PostService = require('../services/PostService')
+const PostService = require('../services/postService')
+const Joi = require('joi')
+const { validateReqBody, schemas } = require('../util/argsValidator')
 
 
 
 module.exports = {
 
 
-  getHeaders: async (req, res, next) => {  
-    const userID = req.user._id
-    try {
+  getHeaders: async (req, res, next) => {
+    try {  
+      const userID = req.user._id
       const postService = new PostService(Header)
       const headers = await postService.findAll({ 'user.id': userID }) 
       return res.json(headers)
@@ -25,9 +27,14 @@ module.exports = {
 
 
   postHeader: async (req, res, next) => {
-    const userID = req.user._id
-    const { name, cells } = req.body
     try { 
+      const userID = req.user._id
+      const { name, cells } = validateReqBody(req.body, 
+        {
+          name: Joi.string().trim().required(),
+          cells: schemas.headerCells.required()
+        }
+      )
       const postService = new PostService(Header)
       const header = await postService.post({ name, cells, user: { id: userID }})
       return res.json(header)
@@ -38,9 +45,14 @@ module.exports = {
 
 
   editHeader: async (req, res, next) => {  
-    const header = req.header
-    const { name, cells } = req.body
     try {
+      const header = req.header
+      const { name, cells } = validateReqBody(req.body, 
+        {
+          name: Joi.string().trim().required(),
+          cells: schemas.headerCells.required()
+        }
+      )
       const postService = new PostService(Header)
       const updatedHeader = await postService.update(header, { name, cells }) 
       return res.json(updatedHeader)
@@ -51,8 +63,8 @@ module.exports = {
 
 
   deleteHeader: async (req, res, next) => {  
-    const header = req.header
     try {
+      const header = req.header
       const postService = new PostService(Header)
       const deletedHeader = await postService.destroy(header)
       return res.json(deletedHeader)

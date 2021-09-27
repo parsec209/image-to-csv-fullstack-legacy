@@ -48,19 +48,6 @@ afterAll(async () => {
 
 
 describe('POST /api/transfers/upload', () => {
-  test('handles local upload errors (i.e. file too large)', async () => {
-    const response = await agent
-      .post('/api/transfers/upload')
-      .attach('myFiles', __dirname + `/seeds/uploads/largeFile.tiff`)
-    expect(response.body).toStrictEqual({ 'message': 'File too large', 'status': 'error' })
-    expect(response.statusCode).toBe(500)
-  })
-  test('rejects if no files sent', async () => {
-    const response = await agent
-      .post('/api/transfers/upload')
-    expect(response.body).toStrictEqual({ 'message': 'No file chosen. Please select a file to upload', 'status': 'fail' })
-    expect(response.statusCode).toBe(400)
-  })
   test('responds with fileBatchID after successful uploads', async () => {
     const fileBatchID = await agent
       .post('/api/transfers/upload')
@@ -68,12 +55,25 @@ describe('POST /api/transfers/upload', () => {
     expect(uuidValidate(fileBatchID.body)).toBe(true)
     expect(fileBatchID.statusCode).toBe(200)
   })
-  test('handles service errors (i.e. incorrect file format)', async () => {
+  test('rejects if no files sent', async () => {
+    const response = await agent
+      .post('/api/transfers/upload')
+    expect(response.body).toStrictEqual({ 'message': 'No file chosen. Please select a file to upload', 'status': 'fail' })
+    expect(response.statusCode).toBe(400)
+  })
+  test('handles incorrect file type', async () => {
     const response = await agent
       .post('/api/transfers/upload')
       .attach('myFiles', __dirname + '/seeds/uploads/cloud/invalidExts/TXT.txt')
     expect(response.body).toStrictEqual({ 'message': 'File format not supported. Accepted file formats: pdf, gif, tif', 'status': 'fail' })
-    expect(response.statusCode).toBe(400)
+    expect(response.statusCode).toBe(415)
+  })
+  test('handles MulterError (i.e. file too large)', async () => {
+    const response = await agent
+      .post('/api/transfers/upload')
+      .attach('myFiles', __dirname + `/seeds/uploads/largeFile.tiff`)
+    expect(response.body).toStrictEqual({ 'message': 'File too large', 'status': 'fail' })
+    expect(response.statusCode).toBe(500)
   })
 })
 
@@ -93,20 +93,18 @@ describe('POST /api/transfers/extract', () => {
     expect(response.body).toStrictEqual(expected)
     expect(response.statusCode).toBe(200)
   })
-  test('responds with doc identification status (provided fileBatchID does not exist in GCP)', async () => {
-    await bucket.upload(__dirname + '/seeds/uploads/cloud/validExts/GIF.GIF', { destination: `${userID}/uploads/${uuidv4()}/GIF.GIF`, metadata: { contentType: 'image/gif' }})
+  test('handles request body validation errors (invalid fileBatchID)', async () => {
     const response = await agent
       .post('/api/transfers/extract')
       .send({
-        fileBatchID: uuidv4(), 
+        fileBatchID: 'invalid', 
         pageSelections: [1],
         dateToday: '2020/09/14'
       })
-    const expected = { identifiedDocs: [], unidentifiedDocs: [] }
-    expect(response.body).toStrictEqual(expected)
-    expect(response.statusCode).toBe(200)
+    expect(response.body).toStrictEqual({ 'message': 'Request body error: "fileBatchID" must be a valid GUID', 'status': 'fail' })
+    expect(response.statusCode).toBe(400)
   })
-  test('handles service errors (i.e. doc does not contain any pages from the page selections) ', async () => {
+  test('handles invalid page error', async () => {
     const fileBatchID = uuidv4()
     await bucket.upload(__dirname + '/seeds/uploads/cloud/validExts/GIF.GIF', { destination: `${userID}/uploads/${fileBatchID}/GIF.GIF`, metadata: { contentType: 'image/gif' }})
     const response = await agent
@@ -116,55 +114,8 @@ describe('POST /api/transfers/extract', () => {
         pageSelections: [1000],
         dateToday: '2020/09/14'
       })
-    expect(response.body).toStrictEqual({ 'message': '3 INVALID_ARGUMENT: No pages found.', 'status': 'error' })
+    expect(response.body).toStrictEqual({ 'message': 'None of the selected pages match an actual document page in this batch', 'status': 'fail' })
     expect(response.statusCode).toBe(500)
-  })
-  
-  describe('handles Express validation errors', () => {
-    test('handles invalid fileBatchID', async () => {
-      const response = await agent
-        .post('/api/transfers/extract')
-        .send({
-          fileBatchID: 'invalid', 
-          pageSelections: [1],
-          dateToday: '2020/09/14'
-        })
-      expect(response.body).toStrictEqual({ 'message': 'fileBatchID must be a valid UUID', 'status': 'fail' })
-      expect(response.statusCode).toBe(400)
-    })
-    test('handles empty pageSelections', async () => {
-      const response = await agent
-        .post('/api/transfers/extract')
-        .send({
-          fileBatchID: uuidv4(),
-          pageSelections: [],
-          dateToday: '2020/09/14'
-        })
-      expect(response.body).toStrictEqual({ 'message': 'pageSelections must be an array containing one or more numbers', 'status': 'fail' })
-      expect(response.statusCode).toBe(400)
-    })
-    test('handles pageSelections with wrong data type', async () => {
-      const response = await agent
-        .post('/api/transfers/extract')
-        .send({
-          fileBatchID: uuidv4(),
-          pageSelections: ['a'],
-          dateToday: '2020/09/14'
-        })
-      expect(response.body).toStrictEqual({ 'message': 'pageSelections must be an array containing one or more numbers', 'status': 'fail' })
-      expect(response.statusCode).toBe(400)
-    })
-    test('handles invalid dateToday', async () => {
-      const response = await agent
-        .post('/api/transfers/extract')
-        .send({
-          fileBatchID: uuidv4(),
-          pageSelections: [1],
-          dateToday: '09/14/2020'
-        })
-      expect(response.body).toStrictEqual({ 'message': 'dateToday must be a valid date formatted as YYYY/MM/DD', 'status': 'fail' })
-      expect(response.statusCode).toBe(400)
-    })
   })
 })
 
@@ -183,14 +134,23 @@ describe('POST /api/transfers/write', () => {
     expect(response.body).toEqual(expect.stringContaining(`https://storage.googleapis.com/invoices6293_dev/${userID}/downloads/${fileBatchID}/CSVFiles.zip`))
     expect(response.statusCode).toBe(200)
   })
-  test('handles service errors (i.e. fileBatchID does not match existing file in GCP', async () => {
+  test('handles request body validation errors (invalid fileBatchID)', async () => {
+    const response = await agent
+      .post('/api/transfers/write')
+      .send({
+        fileBatchID: 'invalid'
+      })
+    expect(response.body).toStrictEqual({ 'message': 'Request body error: "fileBatchID" must be a valid GUID', 'status': 'fail' })
+    expect(response.statusCode).toBe(400)
+  })
+  test('handles zip creation error (i.e. fileBatchID does not exist in GCP)', async () => {
     const response = await agent
       .post('/api/transfers/write')
       .send({
         fileBatchID: uuidv4()
       })
-    expect(response.body).toStrictEqual({ 'message': 'An internal error occurred', 'status': 'error' })
-    expect(response.statusCode).toBe(500)
+    expect(response.body).toStrictEqual({ 'message': 'Unable to create zip file due to either file batch ID or CSV files not existing', 'status': 'fail' })
+    expect(response.statusCode).toBe(404)
   })
 })
 

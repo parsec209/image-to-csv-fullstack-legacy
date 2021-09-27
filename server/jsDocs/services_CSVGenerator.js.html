@@ -34,13 +34,15 @@
 const {Storage} = require('@google-cloud/storage')
 const storage = new Storage()
 const bucket = storage.bucket(process.env.STORAGE_BUCKET)
-const TextExtractor = require('./TextExtractor')
-const WordListGenerator = require('./WordListGenerator')
-const CellValueGenerator = require('./CellValueGenerator')
-const CSVWriter = require('./CSVWriter')
-const PostService = require('./PostService')
+const getDocText = require('./textExtractor')
+const { getWordList, sortWordList } = require('./wordListGenerator')
+const CellValueGenerator = require('./cellValueGenerator')
+const { getConsolidatedBlueprints, writeCSVFiles } = require('./CSVWriter')
 const Doc = require('../models/doc')
-const { validateArgs } = require('../util/ArgsValidator')
+const PostService = require('./postService')
+const postService = new PostService(Doc)
+const { validateArgs, schemas } = require('../util/argsValidator')
+const Joi = require('joi')
 
 
 
@@ -48,101 +50,84 @@ const { validateArgs } = require('../util/ArgsValidator')
 
 
 /**
- * Class to create csvGenerator object
+ * Parses each document's text to see if it contains one of the recurring document ID phrases 
+ * @param {Array&lt;DocText>} docsText - Extracted text from all the docs in the batch
+ * @param {Array&lt;Object>} recurringDocs - Mongoose Doc model instances (recurring documents)
+ * @returns {MatchedText} - Specifies which uploads contain a recurring doc's ID phrase    
  */
-class CSVGenerator {
-  /**
-   * Create csvGenerator 
-   * @param {User} user - User info
-   * @param {string} fileBatchID - Batch ID for files
-   * @param {Array&lt;number>} pageSelections - Page numbers to scan for this file batch
-   * @param {string} dateToday - Today's date
-   */
-  constructor (user, fileBatchID, pageSelections, dateToday) {
-    validateArgs(['{username: String,  _id: {toHexString: Function, ...}, ...}', 'String', '[Number]', 'String'], arguments)
-    this.user = user
-    this.fileBatchID = fileBatchID
-    this.pageSelections = pageSelections
-    this.dateToday = dateToday
-  }
-
-
-  /**
-   * Parses each document's text to see if it contains one of the recurring document ID phrases 
-   * @param {Array&lt;DocText>} docsText - Extracted text from all the docs in the batch
-   * @param {Array&lt;Object>} recurringDocs - Mongoose Doc model instances (recurring documents)
-   * @returns {MatchedText} - Filenames of the uploads where ID phrases were found or not found, and the the recurring doc instances that contain those ID phrases   
-   */
-  identifyDocText(docsText, recurringDocs) {
-    validateArgs(['[{fileName: String, extraction: Array}]', '[{_id: Object, name: String, idPhrase: String, header: Array, dataRows: Array, user: Object, ...}]'], arguments)
-    const matchedDocsText = []
-    const unmatchedDocsText = []
-    const matchedRecurringDocs = []
-    docsText.forEach(function(docText) {
-      for (let i = 0; i &lt; recurringDocs.length; i++) {
-        let recurringDoc = recurringDocs[i]      
-        let idPhraseFound = false
-        let idPhrase2Found = false
-        for (let i = 0; i &lt; docText.extraction.length; i++) {
-          let page = docText.extraction[i]
-          if (page.fullTextAnnotation) {
-            if (!idPhraseFound &amp;&amp; page.fullTextAnnotation.text.includes(recurringDoc.idPhrase)) {
-              idPhraseFound = true
-            }
-            if (recurringDoc.idPhrase2 &amp;&amp; !idPhrase2Found &amp;&amp; page.fullTextAnnotation.text.includes(recurringDoc.idPhrase2)) {
-              idPhrase2Found = true
-            }
-            if (idPhraseFound &amp;&amp; (recurringDoc.idPhrase2 ? idPhrase2Found : true)) {
-              matchedRecurringDocs.push({ fileName: docText.fileName, recurringDoc })
-              matchedDocsText.push(docText.fileName)
-              return
-            }
+const identifyDocText = function(docsText, recurringDocs) {
+  validateArgs(arguments, 
+    {
+      0: Joi.array().items(schemas.docText),
+      1: Joi.array().items(schemas.recurringDoc)
+    }
+  )
+  const matchedDocsText = []
+  const unmatchedDocsText = []
+  const matchedRecurringDocs = []
+  docsText.forEach(function(docText) {
+    for (let i = 0; i &lt; recurringDocs.length; i++) {
+      let recurringDoc = recurringDocs[i]      
+      let idPhraseFound = false
+      let idPhrase2Found = false
+      for (let i = 0; i &lt; docText.extraction.length; i++) {
+        let page = docText.extraction[i]
+        if (page.fullTextAnnotation) {
+          if (!idPhraseFound &amp;&amp; page.fullTextAnnotation.text.includes(recurringDoc.idPhrase)) {
+            idPhraseFound = true
+          }
+          if (recurringDoc.idPhrase2 &amp;&amp; !idPhrase2Found &amp;&amp; page.fullTextAnnotation.text.includes(recurringDoc.idPhrase2)) {
+            idPhrase2Found = true
+          }
+          if (idPhraseFound &amp;&amp; (recurringDoc.idPhrase2 ? idPhrase2Found : true)) {
+            matchedRecurringDocs.push({ fileName: docText.fileName, recurringDoc })
+            matchedDocsText.push(docText.fileName)
+            return
           }
         }
       }
-      unmatchedDocsText.push(docText.fileName)
-    })
-    return { matchedDocsText, unmatchedDocsText, matchedRecurringDocs }
-  }
-
-
-  /**
-   * Process starting at file batch text extraction and ending when CSV files are uploaded to GCP storage bucket
-   * @returns {Promise&lt;{identifiedDocs: Array&lt;string>, unidentifiedDocs: Array&lt;string>}>} - Lists the filenames in the batch that were both identified and not identified using recurring doc ID phrases
-   */
-  async compileData() {
-    const self = this
-    const docs = await bucket.getFiles({ directory: `${this.user._id}/uploads/${this.fileBatchID}` })
-    const docsText = await Promise.all(docs[0].map(async function(doc) {
-      const textExtractor = new TextExtractor(doc, self.pageSelections)
-      return await textExtractor.getDocText()
-    }))
-    const postService = new PostService(Doc)
-    const recurringDocs = await postService.findAll({ 'user.id': this.user._id })
-    let { matchedDocsText, unmatchedDocsText, matchedRecurringDocs } = this.identifyDocText(docsText, recurringDocs)
-    const CSVBlueprints = matchedDocsText.map(matchedDocText => {
-      const docText = docsText.find(docText => docText.fileName === matchedDocText)
-      const recurringDoc = matchedRecurringDocs.find(matchedRecurringDoc => matchedRecurringDoc.fileName === matchedDocText).recurringDoc
-      const wordListGenerator = new WordListGenerator(docText)
-      const wordList = wordListGenerator.getWordList()
-      wordListGenerator.sortWordList(wordList) 
-      const cellValueGenerator = new CellValueGenerator(docText, wordList, recurringDoc, self.dateToday)
-      const CSVBlueprint = cellValueGenerator.getCSVBlueprint()
-      return CSVBlueprint
-    })
-    if (CSVBlueprints.length) {
-      const csvWriter = new CSVWriter(this.user._id, this.fileBatchID, CSVBlueprints)
-      const consolidatedBlueprints = csvWriter.getConsolidatedBlueprints()
-      await csvWriter.writeCSVFiles(consolidatedBlueprints)
     }
-    return { identifiedDocs: matchedDocsText, unidentifiedDocs: unmatchedDocsText }
-  }
+    unmatchedDocsText.push(docText.fileName)
+  })
+  return { matchedDocsText, unmatchedDocsText, matchedRecurringDocs }
 }
 
-module.exports = CSVGenerator
+
+/**
+ * Process starting at batch image annotation and ending when the generated CSV files are uploaded to GCP storage bucket
+ * @param {User} user - User info
+ * @param {string} fileBatchID - Batch ID for files
+ * @param {Array&lt;number>} pageSelections - Page numbers to scan for this file batch
+ * @param {string} dateToday - Today's date (per client)
+ * @returns {Promise&lt;{identifiedDocs: Array&lt;string>, unidentifiedDocs: Array&lt;string>}>} - Lists the identified and unidentified filenames in the batch, based on whether they contained a recurring doc ID phrase
+ */
+const compileData = async function(user, fileBatchID, pageSelections, dateToday) {
+  validateArgs(arguments, { 0: schemas.user, 1: schemas.fileBatchID, 2: schemas.pageSelections, 3: Joi.date() })
+  const docs = await bucket.getFiles({ directory: `${user._id}/uploads/${fileBatchID}` })
+  const docsText = await Promise.all(docs[0].map(async function(doc) {
+    return await getDocText(doc, pageSelections)
+  }))
+  const recurringDocs = await postService.findAll({ 'user.id': user._id })
+  let { matchedDocsText, unmatchedDocsText, matchedRecurringDocs } = identifyDocText(docsText, recurringDocs)
+  const CSVBlueprints = matchedDocsText.map(matchedDocText => {
+    const docText = docsText.find(docText => docText.fileName === matchedDocText)
+    const recurringDoc = matchedRecurringDocs.find(matchedRecurringDoc => matchedRecurringDoc.fileName === matchedDocText).recurringDoc
+    const wordList = getWordList(docText)
+    sortWordList(wordList) 
+    const cellValueGenerator = new CellValueGenerator(docText, wordList, recurringDoc, dateToday)
+    const CSVBlueprint = cellValueGenerator.getCSVBlueprint()
+    return CSVBlueprint
+  })
+  if (CSVBlueprints.length) {
+    const consolidatedBlueprints = getConsolidatedBlueprints(CSVBlueprints)
+    await writeCSVFiles(consolidatedBlueprints, user._id, fileBatchID)
+  }
+  return { identifiedDocs: matchedDocsText, unidentifiedDocs: unmatchedDocsText }
+}
 
 
 
+module.exports = { identifyDocText, compileData }
 
 
 
@@ -161,13 +146,13 @@ module.exports = CSVGenerator
 </div>
 
 <nav>
-    <h2><a href="index.html">Img-To-CSV Services</a></h2><h3>Modules</h3><ul><li><a href="module-CellValueGenerator.html">CellValueGenerator</a></li><li><a href="module-CSVGenerator.html">CSVGenerator</a></li><li><a href="module-CSVWriter.html">CSVWriter</a></li><li><a href="module-PasswordReset.html">PasswordReset</a></li><li><a href="module-PostService.html">PostService</a></li><li><a href="module-TextExtractor.html">TextExtractor</a></li><li><a href="module-Uploader.html">Uploader</a></li><li><a href="module-WordListGenerator.html">WordListGenerator</a></li><li><a href="module-ZipWriter.html">ZipWriter</a></li></ul><h3>Classes</h3><ul><li><a href="module-CellValueGenerator-CellValueGenerator.html">CellValueGenerator</a></li><li><a href="module-CSVGenerator-CSVGenerator.html">CSVGenerator</a></li><li><a href="module-CSVWriter-CSVWriter.html">CSVWriter</a></li><li><a href="module-PostService-PostService.html">PostService</a></li><li><a href="module-TextExtractor-TextExtractor.html">TextExtractor</a></li><li><a href="module-Uploader-Uploader.html">Uploader</a></li><li><a href="module-WordListGenerator-WordListGenerator.html">WordListGenerator</a></li><li><a href="module-ZipWriter-ZipWriter.html">ZipWriter</a></li></ul><h3>Tutorials</h3><ul><li><a href="tutorial-CellValueGenerator-tutorial.html">CellValueGenerator</a></li><li><a href="tutorial-CSVGenerator-tutorial.html">CSVGenerator</a></li><li><a href="tutorial-WordListGenerator-tutorial.html">WordListGenerator</a></li></ul><h3><a href="global.html">Global</a></h3>
+    <h2><a href="index.html">Img-To-CSV Services</a></h2><h3>Modules</h3><ul><li><a href="module-cellValueGenerator.html">cellValueGenerator</a></li><li><a href="module-CSVGenerator.html">CSVGenerator</a></li><li><a href="module-CSVWriter.html">CSVWriter</a></li><li><a href="module-passwordReset.html">passwordReset</a></li><li><a href="module-postService.html">postService</a></li><li><a href="module-textExtractor.html">textExtractor</a></li><li><a href="module-uploader.html">uploader</a></li><li><a href="module-wordListGenerator.html">wordListGenerator</a></li><li><a href="module-zipWriter.html">zipWriter</a></li></ul><h3>Classes</h3><ul><li><a href="InputError.html">InputError</a></li><li><a href="module-cellValueGenerator-CellValueGenerator.html">CellValueGenerator</a></li><li><a href="module-postService-PostService.html">PostService</a></li><li><a href="module-uploader-Uploader.html">Uploader</a></li><li><a href="module-zipWriter-ZipWriter.html">ZipWriter</a></li></ul><h3>Tutorials</h3><ul><li><a href="tutorial-cellValueGenerator-tutorial.html">cellValueGenerator</a></li><li><a href="tutorial-CSVGenerator-tutorial.html">CSVGenerator</a></li><li><a href="tutorial-wordListGenerator-tutorial.html">wordListGenerator</a></li></ul><h3><a href="global.html">Global</a></h3>
 </nav>
 
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.6</a> on Wed Aug 18 2021 22:36:30 GMT-0400 (Eastern Daylight Time)
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.6</a> on Sun Sep 26 2021 22:39:09 GMT-0400 (Eastern Daylight Time)
 </footer>
 
 <script> prettyPrint(); </script>

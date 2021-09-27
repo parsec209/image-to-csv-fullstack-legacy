@@ -34,73 +34,51 @@ describe('POST /api/user/register', () => {
     const user = await request(app)
       .post('/api/user/register')
       .send(generateCreds())
-    expect(user.body).toHaveProperty('_id')
     expect(user.body).toHaveProperty('username')
     expect(user.body).toHaveProperty('email')
+    expect(user.body).toHaveProperty('_id')
     expect(user.statusCode).toBe(200)
   })
-
-  describe('validating password', () => {
-    test('rejects with no capital letters', async () => {
-      const creds = generateCreds()
-      creds.password = 'aaaa123456'
-      creds.confirmedPassword = 'aaaa123456'
-      const user = await request(app)
-        .post('/api/user/register')
-        .send(creds)
-      expect(user.body).toStrictEqual({ 'message': 'Password must be at least eight characters long and contain an upper case letter, a lower case letter, and a number, with no special characters', 'status': 'fail' })
-      expect(user.statusCode).toBe(400)
-    }) 
-    test('rejects with no lower case letters', async () => {
-      const creds = generateCreds()
-      creds.password = 'AAAA123456'
-      creds.confirmedPassword = 'AAAA123456'
-      const user = await request(app)
-        .post('/api/user/register')
-        .send(creds)
-      expect(user.body).toStrictEqual({ 'message': 'Password must be at least eight characters long and contain an upper case letter, a lower case letter, and a number, with no special characters', 'status': 'fail' })
-      expect(user.statusCode).toBe(400)
-    }) 
-    test('rejects with no numbers', async () => {
-      const creds = generateCreds()
-      creds.password = 'AAAAbbbb'
-      creds.confirmedPassword = 'AAAAbbbb'
-      const user = await request(app)
-        .post('/api/user/register')
-        .send(creds)
-      expect(user.body).toStrictEqual({ 'message': 'Password must be at least eight characters long and contain an upper case letter, a lower case letter, and a number, with no special characters', 'status': 'fail' })
-      expect(user.statusCode).toBe(400)
-    }) 
-    test('rejects with special chars', async () => {
-      const creds = generateCreds()
-      creds.password = '11111@Aab'
-      creds.confirmedPassword = '11111@Aab'
-      const user = await request(app)
-        .post('/api/user/register')
-        .send(creds)
-      expect(user.body).toStrictEqual({ 'message': 'Password must be at least eight characters long and contain an upper case letter, a lower case letter, and a number, with no special characters', 'status': 'fail' })
-      expect(user.statusCode).toBe(400)
-    }) 
+  test('handles request body validation errors (i.e. password does not meet pattern requirements)', async () => {
+    const creds = generateCreds()
+    creds.password = 'aaaa123456'
+    creds.confirmedPassword = 'aaaa123456'
+    const user = await request(app)
+      .post('/api/user/register')
+      .send(creds)
+    expect(user.body).toStrictEqual({ 'message': 'Request body error: "password" with value "aaaa123456" fails to match the required pattern: /^(?=.*\\d)(?=.*[a-z])(?=.*[A-Z])[0-9a-zA-Z]{8,}$/', 'status': 'fail' })
+    expect(user.statusCode).toBe(400)
+  }) 
+  test('handles invalid invitation code error', async () => {
+    const creds = generateCreds()
+    creds.invitationCode = 'incorrect'
+    const user = await request(app)
+      .post('/api/user/register')
+      .send(creds)
+    expect(user.body).toStrictEqual({ 'message': 'Must supply valid invitation code to register', 'status': 'fail' })
+    expect(user.statusCode).toBe(401)
+  }) 
+  test('handles database validation errors (i.e. username already exists)', async () => {
+    const creds = generateCreds()
+    await request(app)
+      .post('/api/user/register')
+      .send(creds)
+    const error = await request(app)
+      .post('/api/user/register')
+      .send(creds)
+    expect(error.body).toStrictEqual({ 'message': 'A user with the given username is already registered', 'status': 'fail' })
+    expect(error.statusCode).toBe(500)
   })
-
-  describe('handling Express validation errors', () => {
-    test('rejects if inputs are either missing or invalid ', async () => {
-      const creds = { email: 'invalidEmail' }
-      const user = await request(app)
-        .post('/api/user/register')
-        .send(creds)
-      expect(user.body).toStrictEqual({ 'message': 'Missing string in request body: username. Must include a valid email address in request body. Missing string in request body: password. Missing string in request body: confirmedPassword', 'status': 'fail' })
-      expect(user.statusCode).toBe(400)
-    })
-    test('rejects if password and confirmation password do not match', async () => {
-      const creds = generateCreds()
-      creds.confirmedPassword = '22222Aab'
-      const user = await request(app)
-        .post('/api/user/register')
-        .send(creds)
-      expect(user.body).toStrictEqual({ 'message': 'Password and confirmed password must match', 'status': 'fail' })
-      expect(user.statusCode).toBe(400)
-    }) 
+  test('handles 11000 error code (i.e. email already exists)', async () => {
+    const creds = generateCreds()
+    await request(app)
+      .post('/api/user/register')
+      .send(creds)
+    const error = await request(app)
+      .post('/api/user/register')
+      .send({ username: 'newUser123434980', email: creds.email, password: creds.password, confirmedPassword: creds.confirmedPassword, invitationCode: creds.invitationCode })
+    expect(error.body).toStrictEqual({ 'message': `The same value already exists for the following field: { email: "${creds.email}" }`, 'status': 'fail' })
+    expect(error.statusCode).toBe(500)
   })
 })
 
@@ -114,21 +92,22 @@ describe('POST /api/user/login', () => {
       .send({ username, email, password, confirmedPassword, invitationCode })
   })
 
-  test('handles authentication errors', async () => {
-    const login = await request.agent(app)
-      .post('/api/user/login')
-      .send({ username, password: 'wrongPassword' })
-    expect(login.body).toStrictEqual({ 'message': 'Authentication failed', 'status': 'fail' })
-    expect(login.statusCode).toBe(401)
-  })
-  test('authenticates user and responds with user info', async () => {
+  test('authenticates user and responds with user info and session cookie', async () => {
     const user = await request.agent(app)
       .post('/api/user/login')
       .send({ username, password })
     expect(user.body).toHaveProperty('_id')
     expect(user.body).toHaveProperty('username')
     expect(user.body).toHaveProperty('email')
+    expect(user.header['set-cookie'][0]).toMatch(/mySession/)
     expect(user.statusCode).toBe(200)
+  })
+  test('handles authentication errors', async () => {
+    const login = await request.agent(app)
+      .post('/api/user/login')
+      .send({ username, password: 'wrongPassword' })
+    expect(login.body).toStrictEqual({ 'message': 'Authentication failed', 'status': 'fail' })
+    expect(login.statusCode).toBe(401)
   })
   test('regenerates session after logging in when already authenticated', async () => {
     const agent = request.agent(app)
@@ -139,8 +118,8 @@ describe('POST /api/user/login', () => {
       .post('/api/user/login')
       .send({ username, password })
     //shows new cookie is sent with second login  
-    expect(user.header['set-cookie']).toBeDefined()
-    expect(user2.header['set-cookie']).toBeDefined()
+    expect(user.header['set-cookie'][0]).toMatch(/mySession/)
+    expect(user2.header['set-cookie'][0]).toMatch(/mySession/)
     expect(user2.statusCode).toBe(200)
   })
 })
@@ -162,6 +141,12 @@ describe('GET /api/user', () => {
     expect(user.body).toHaveProperty('username')
     expect(user.body).toHaveProperty('email')
     expect(user.statusCode).toBe(200)
+  })
+  test('handles authentication error', async () => {
+    const error = await request.agent(app)
+      .get('/api/user')
+    expect(error.body).toStrictEqual({ 'message': 'Not authenticated, please login', 'status': 'fail' })
+    expect(error.statusCode).toBe(401)
   })
 })
 
@@ -186,6 +171,12 @@ describe('GET /api/user/logout', () => {
     expect(response.body).toStrictEqual({ 'message': 'Not authenticated, please login', 'status': 'fail' })
     expect(response.statusCode).toBe(401)
   })
+  test('handles authentication error', async () => {
+    const error = await request.agent(app)
+      .get('/api/user/logout')
+    expect(error.body).toStrictEqual({ 'message': 'Not authenticated, please login', 'status': 'fail' })
+    expect(error.statusCode).toBe(401)
+  })
 })
 
 
@@ -204,7 +195,7 @@ describe('POST /api/user/forgot', () => {
       .send({ email })
     expect(response.statusCode).toBe(200)
   })
-  test('handles service errors', async () => {
+  test('handles invalid email error', async () => {
     const response = await request(app)
       .post('/api/user/forgot')
       .send({ email: 'invalid@test.com' })
@@ -234,59 +225,82 @@ describe('POST /api/user/reset/:token', () => {
       .send({ password: 'newPassword123', confirmedPassword: 'newPassword123' })
     expect(response.statusCode).toBe(200)
   })
-  test('handles service errors', async () => {
+  test('handles request parameter validation error', async () => {
     const response = await request(app)
-      .post('/api/user/reset/invalidToken')
+      .post('/api/user/reset/Abc123')
+      .send({ password: 'newPassword123', confirmedPassword: 'newPassword123' })
+      expect(response.body).toStrictEqual({ 'message': 'Request paramater error: "value" with value "Abc123" fails to match the required pattern: /^[a-z0-9]+$/', 'status': 'fail' })
+    expect(response.statusCode).toBe(400)
+  })
+  test('handles request body validation errors', async () => {
+    const response = await request(app)
+      .post('/api/user/reset/abc123')
+      .send({ password: 'newPassword123' })
+      expect(response.body).toStrictEqual({ 'message': 'Request body error: "confirmedPassword" is required', 'status': 'fail' })
+    expect(response.statusCode).toBe(400)
+  })
+  test('handles invalid or expired token', async () => {
+    const response = await request(app)
+      .post('/api/user/reset/abc123')
       .send({ password: 'newPassword123', confirmedPassword: 'newPassword123' })
       expect(response.body).toStrictEqual({ 'message': 'Password reset token is either invalid or has expired', 'status': 'fail' })
-    expect(response.statusCode).toBe(400)
+    expect(response.statusCode).toBe(404)
   })
 })
 
   
 describe('POST /api/user/change', () => {
-  const { username, email, password, confirmedPassword, invitationCode } = generateCreds()
-  let agent
-  
-  beforeAll(async () => {
-    agent = request.agent(app)
+
+  const register = async () => {
+    const creds = generateCreds()
+    const agent = request.agent(app)
     await request(app)
       .post('/api/user/register')
-      .send({ username, email, password, confirmedPassword, invitationCode })
+      .send(creds)
+    return { creds, agent }  
+  }
+
+  test('responds with success status code after changing password', async () => { 
+    const { creds, agent } = await register()
+    const { username, password } = creds
     await agent
       .post('/api/user/login')
       .send({ username, password })
-  })
-
-  describe('handling Express validation errors', () => {
-    test('rejects if missing oldPassword', async () => {
-      const response = await agent
-        .post('/api/user/change')
-        .send({ password: '22222Aab', confirmedPassword: '22222Aab' })
-      expect(response.body).toStrictEqual({ 'message': 'Missing string in request body: oldPassword', 'status': 'fail' })
-      expect(response.statusCode).toBe(400)
-    })
-    test('rejects if oldPassword is same as password', async () => {
-      const response = await agent
-        .post('/api/user/change')
-        .send({ oldPassword: '22222Aab', password: '22222Aab', confirmedPassword: '22222Aab' })
-      expect(response.body).toStrictEqual({ 'message': 'New password must be different from current password', 'status': 'fail' })
-      expect(response.statusCode).toBe(400)
-    })
-  })
-
-  test('handles service errors', async () => {
-    const response = await agent
-      .post('/api/user/change')
-      .send({ oldPassword: 'invalid', password: '22222Aab', confirmedPassword: '22222Aab' })
-    expect(response.body).toStrictEqual({ 'message': 'Password is incorrect', 'status': 'error' })
-    expect(response.statusCode).toBe(500)
-  })
-  test('responds with success status code after changing password', async () => {   
     const response = await agent
       .post('/api/user/change')
       .send({ oldPassword: password, password: '22222Aab', confirmedPassword: '22222Aab' })
     expect(response.statusCode).toBe(200)
+  })
+  test('handles request body validation errors (i.e. old password is same as new password)', async () => {
+    const { creds, agent } = await register()
+    const { username, password } = creds
+    await agent
+      .post('/api/user/login')
+      .send({ username, password })
+    const response = await agent
+      .post('/api/user/change')
+      .send({ oldPassword: '22222Aab', password: '22222Aab', confirmedPassword: '22222Aab' })
+    expect(response.body).toStrictEqual({ 'message': 'Request body error: "password" contains an invalid value', 'status': 'fail' })
+    expect(response.statusCode).toBe(400)
+  })
+  test('handles authentication error', async () => {
+    const { agent } = await register()
+    const error = await agent
+      .post('/api/user/change')
+    expect(error.body).toStrictEqual({ 'message': 'Not authenticated, please login', 'status': 'fail' })
+    expect(error.statusCode).toBe(401)
+  })
+  test('handles database validation errors (i.e. password incorrect)', async () => {
+    const { creds, agent } = await register()
+    const { username, password } = creds
+    await agent
+      .post('/api/user/login')
+      .send({ username, password })
+    const response = await agent
+      .post('/api/user/change')
+      .send({ oldPassword: 'invalid', password: '22222Aab', confirmedPassword: '22222Aab' })
+    expect(response.body).toStrictEqual({ 'message': 'Password is incorrect', 'status': 'fail' })
+    expect(response.statusCode).toBe(500)
   })
 })
 
