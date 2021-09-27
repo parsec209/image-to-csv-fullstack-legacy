@@ -1,5 +1,5 @@
 const User = require('../models/user')
-const { generateToken, addTokenToUser, sendResetEmail, getTokenUser, passwordReset, sendConfEmail } = require('../services/PasswordReset')
+const { generateToken, addTokenToUser, sendResetEmail, getTokenUser, passwordReset, sendConfEmail } = require('../services/passwordReset')
 const InputError = require('../util/inputError')
 const Joi = require('joi')
 const { validateReqBody, validateReqParams, schemas } = require('../util/argsValidator')

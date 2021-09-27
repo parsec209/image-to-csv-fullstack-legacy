@@ -1,6 +1,6 @@
 const fsPromises = require('fs').promises
 const CellValueGenerator = require('../services/cellValueGenerator')
-const PostService = require('../services/PostService')
+const PostService = require('../services/postService')
 const Doc = require('../models/doc')
 const User = require('../models/user')
 const connectDB = require('../loaders/db')

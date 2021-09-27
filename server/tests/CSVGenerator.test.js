@@ -8,7 +8,7 @@ const connectDB = require('../loaders/db')
 const mongoose = require('mongoose')
 const Doc = require('../models/doc')
 const User = require('../models/user')
-const PostService = require('../services/PostService')
+const PostService = require('../services/postService')
 const postService = new PostService(Doc)
 
 
