@@ -32,7 +32,6 @@ module.exports = (dbConnection) => {
     saveUninitialized: false,
     cookie: { 
       maxAge: 28800000, //expires after 8 hours
-      secure: process.env.NODE_ENV === 'production' ? true : false
     }  
   }))
 
