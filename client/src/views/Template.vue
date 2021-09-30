@@ -771,8 +771,11 @@ export default {
       return dataRows
     },
 
-    //Removes cell sect properties containing empty values before saving doc to db, in order to save db space
-    removeFalsyValuesFromDataRows() {
+    //Removes properties containing falsy values before saving to db
+    removeFalsyValuesFromDoc() {
+      if (!this.form.idPhrase2) {
+        delete this.form.idPhrase2
+      }
       this.form.dataRows.forEach(row => {
         row.dataCells.forEach(cell => {
           cell.cellSects.forEach(sect => {
@@ -828,7 +831,7 @@ export default {
       if (this.templateType === 'header') {
         await axios.post('/api/headers/', { name: this.form.name, cells: this.form.headerCells })
       } else {
-        this.removeFalsyValuesFromDataRows()
+        this.removeFalsyValuesFromDoc()
         await axios.post('/api/docs/', { 
           name: this.form.name, 
           idPhrase: this.form.idPhrase, 
@@ -844,7 +847,7 @@ export default {
       if (this.templateType === 'header') { 
         await axios.put(`/api/headers/${id}`, { name: this.form.name, cells: this.form.headerCells })
       } else {
-        this.removeFalsyValuesFromDataRows()
+        this.removeFalsyValuesFromDoc()
         await axios.put(`/api/docs/${id}`, { 
           name: this.form.name, 
           idPhrase: this.form.idPhrase, 

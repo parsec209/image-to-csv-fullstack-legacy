@@ -1,6 +1,7 @@
 <template>
   <p>
-    The <strong>data cells</strong> within the recurring document table's body are subdivided into <strong>cell sections</strong>, up to a maximum of four. 
+    The <strong>data cells</strong>, that comprise the recurring document table rows, are subdivided into <strong>cell sections</strong>, up to a maximum of four
+    for each cell. 
     Each cell section uses its own rules to find metadata values within an upload's text, and you must click the individual sections to see their rules. 
     The values retrieved for each cell section will ultimately consolidate into one cell value and be placed into that corresponding row/field in the 
     generated CSV file. 
