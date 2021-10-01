@@ -22,6 +22,7 @@ const cellSectSchema = new mongoose.Schema({
   },
   phraseOrValue: {
     type: String,
+    trim: true,
     maxLength: 100,    
     required: function() {
       return ['topPhrase', 'leftPhrase', 'pattern', 'customValue'].includes(this.searchOrInputMethod)
@@ -38,7 +39,8 @@ const cellSectSchema = new mongoose.Schema({
     type: String,
     minLength: 1,
     maxLength: 100, 
-    validate: [util.searchOrInputMethodIsDefined, util.dateFormatContainsValidChars]
+    match: /^[-MDY\/ \,]+$/,
+    validate: [util.searchOrInputMethodIsDefined]
   },   
   daysAdded: {
     type: Number,
@@ -48,6 +50,7 @@ const cellSectSchema = new mongoose.Schema({
   },
   notes: {
     type: String,
+    trim: true,
     minLength: 1,
     maxLength: 100
   }
@@ -75,18 +78,23 @@ const dataRowSchema = new mongoose.Schema({
 const docSchema = new mongoose.Schema({
   name: {
     type: String,
+    trim: true,
     required: true,
     maxLength: 100
   }, 
   idPhrase: {
     type: String,
+    trim: true,
     required: true,
-    maxLength: 100
+    maxLength: 100,
+    match: /^.+$/
   },
   idPhrase2: {
     type: String,
+    trim: true,
     minLength: 1,
-    maxLength: 100
+    maxLength: 100,
+    match: /^.+$/
   },
   header: {
     type: [headerCellSchema],

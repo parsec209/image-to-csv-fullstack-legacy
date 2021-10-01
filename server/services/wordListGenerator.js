@@ -1,5 +1,5 @@
 /**
- * wordListGenerator module - see {@tutorial wordListGenerator-tutorial}
+ * wordListGenerator module
  * @module wordListGenerator
  */
 

@@ -77,18 +77,6 @@ module.exports = {
     message: 'The inclusion of this property requires a searchOrInputMethod'
   },  
   
-  dateFormatContainsValidChars: {
-    validator: function(v) { 
-      const validChars = 'YMD /-,'
-      for (let i = 0; i < v.length; i++) {
-        if (!validChars.includes(v[i])) {
-          return false
-        }
-      }
-      return true
-    },
-    message: 'Date format can only contain the following characters:  "Y", "M", "D", " ", "/", "-", ","'
-  },
 
   daysAddedIsInteger: {
     validator: function(v) {

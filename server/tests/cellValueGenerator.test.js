@@ -11,12 +11,15 @@ let userID
 let recurringDocs
 let recurringDocGIF
 let recurringDocPDF
+let recurringDocTIF
 let recurringDocPDFCellValues
 let recurringDocGIFCellValues
 let docTextGIF
 let docTextPDF
+let docTextTIF
 let wordListGIF
 let wordListPDF
+let wordListTIF
 
 
 const getUserID = async () => {
@@ -57,12 +60,15 @@ beforeAll(async () => {
   recurringDocs = await getRecurringDocs() 
   recurringDocGIF = await getRecurringDoc(userID, recurringDocs, 0) 
   recurringDocPDF = await getRecurringDoc(userID, recurringDocs, 1) 
+  recurringDocTIF = await getRecurringDoc(userID, recurringDocs, 5) 
   recurringDocPDFCellValues = await getRecurringDoc(userID, recurringDocs, 2) 
   recurringDocGIFCellValues = await getRecurringDoc(userID, recurringDocs, 4) 
   docTextGIF = await getDocText('GIF.json') 
   docTextPDF = await getDocText('PDF_editable.json') 
+  docTextTIF = await getDocText('TIF.json') 
   wordListGIF = await getWordLists('GIF.json')
   wordListPDF = await getWordLists('PDF_editable.json')
+  wordListTIF = await getWordLists('TIF.json')
 })
  
 
@@ -115,17 +121,35 @@ describe('formatting dates', () => {
 
 describe('parsing doc text with regular expressions', () => {
 
-  const initCellValueGenerator = () => {
+  const initCellValueGeneratorPDF = () => {
     return new CellValueGenerator(docTextPDF, wordListPDF, recurringDocPDFCellValues, '2020/09/01')
   }
+  const initCellValueGeneratorTIF = () => {
+    return new CellValueGenerator(docTextTIF, wordListTIF, recurringDocTIF, '2020/09/01')
+  }
 
-  test('finds string using regex', () => {
-    const textFound = initCellValueGenerator().getCellSectValueFromPattern(recurringDocPDFCellValues.dataRows[0].dataCells[1].cellSects[1])
-    //found in page 1 of pdf
-    expect(textFound).toBe('Submitted on 01/01/2000')
+  test('returns matching string with default string count', () => {
+    const textFound = initCellValueGeneratorTIF().getCellSectValueFromPattern(recurringDocTIF.dataRows[0].dataCells[0].cellSects[0])
+    expect(textFound).toBe('Page 1')
   })
-  test('returns empty string if regex finds nothing', () => {
-    const textFound = initCellValueGenerator().getCellSectValueFromPattern(recurringDocPDFCellValues.dataRows[0].dataCells[1].cellSects[2])
+  test('returns empty string due to string count exceeding matches', () => {
+    const textFound = initCellValueGeneratorTIF().getCellSectValueFromPattern(recurringDocTIF.dataRows[0].dataCells[0].cellSects[1])
+    expect(textFound).toBe('')
+  })
+  test('returns string from first page using multi string count', () => {
+    const textFound = initCellValueGeneratorPDF().getCellSectValueFromPattern(recurringDocPDFCellValues.dataRows[0].dataCells[1].cellSects[1])
+    expect(textFound).toBe('Item #2')
+  })
+  test('returns string from additional page using multi string count', () => {
+    const textFound = initCellValueGeneratorPDF().getCellSectValueFromPattern(recurringDocPDFCellValues.dataRows[0].dataCells[1].cellSects[2])
+    expect(textFound).toBe('Flight #123')
+  })
+  test('returns empty string due to phraseOrValue containing line break', () => {
+    const textFound = initCellValueGeneratorTIF().getCellSectValueFromPattern(recurringDocTIF.dataRows[0].dataCells[0].cellSects[2])
+    expect(textFound).toBe('')
+  })
+  test('returns empty string if no matching string found', () => {
+    const textFound = initCellValueGeneratorTIF().getCellSectValueFromPattern(recurringDocTIF.dataRows[0].dataCells[0].cellSects[3])
     expect(textFound).toBe('')
   })
 })

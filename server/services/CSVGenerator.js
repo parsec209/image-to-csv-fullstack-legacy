@@ -1,5 +1,5 @@
 /**
- * CSVGenerator module - see {@tutorial CSVGenerator-tutorial}
+ * CSVGenerator module
  * @module CSVGenerator
  */
 

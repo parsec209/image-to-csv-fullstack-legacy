@@ -363,7 +363,7 @@ router.post('/change', isLoggedIn, changePassword)
  *       enum: [phrase, word] 
  *     DateFormat:
  *       type: string
- *       pattern: '^[-MDY\/\s\,]+$'
+ *       pattern: '^[-MDY\/ \,]+$'
  *     DaysAdded:
  *       type: integer
  *       minimum: 0

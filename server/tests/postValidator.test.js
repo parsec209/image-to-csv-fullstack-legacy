@@ -198,7 +198,7 @@ describe('validating cellSect posts', () => {
       ],
       user: { id: userID }
     }    
-    await expect(new PostService(Doc).post(props)).rejects.toThrow(new Error('Doc validation failed: dataRows.0.dataCells.0.cellSects.0.dateFormat: Date format can only contain the following characters:  "Y", "M", "D", " ", "/", "-", ","'))
+    await expect(new PostService(Doc).post(props)).rejects.toThrow(new Error('Doc validation failed: dataRows.0.dataCells.0.cellSects.0.dateFormat: Path `dateFormat` is invalid (MM}}DDYY).'))
   })
   test('rejects if "daysAdded" is not an integer', async () => {
     const props = {

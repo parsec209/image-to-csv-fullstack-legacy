@@ -1,5 +1,5 @@
 /**
- * cellValueGenerator module - see {@tutorial cellValueGenerator-tutorial}
+ * cellValueGenerator module
  * @module cellValueGenerator
  */
 
@@ -172,7 +172,7 @@ class CellValueGenerator {
    * @returns {string} - Date-formatted cell section value, if it is recognized as a date; otherwise empty string
    */
   getFormattedDate(cellSectValue, recurringDocCellSect) {
-    validateArgs(arguments, { 0: Joi.string(), 1: schemas.recurringDocCellSect })   
+    validateArgs(arguments, { 0: Joi.string().allow(''), 1: schemas.recurringDocCellSect })   
     const dateFormat = recurringDocCellSect.dateFormat || 'YYYY/MM/DD'
     const daysAdded = recurringDocCellSect.daysAdded || 0
     const formattedDate = moment(cellSectValue).add(daysAdded, 'days').format(dateFormat)
@@ -186,19 +186,30 @@ class CellValueGenerator {
   /**
    * Finds cell section value using regular expression
    * @param {Object} recurringDocCellSect - Recurring doc cell section 
-   * @returns {string} - CSV cell section value, if found; otherwise empty string
+   * @returns {string} - Match from the regex, which is used as the cell section value; no match returns empty string
    */
   getCellSectValueFromPattern(recurringDocCellSect) {
     validateArgs(arguments, { 0: schemas.recurringDocCellSect })    
     let cellSectValue = ''
-    let regEx = new RegExp(recurringDocCellSect.phraseOrValue)
+    let maxStringCount = recurringDocCellSect.phraseCount
+    let stringCount = 0
+    let re = new RegExp(recurringDocCellSect.phraseOrValue, 'g')
     for (let i = 0; i < this.docText.extraction.length; i++) {
       let page = this.docText.extraction[i]
       if (page.fullTextAnnotation) {
-        let match = regEx.exec(page.fullTextAnnotation.text)
-        if (match) {
-          cellSectValue = match[0]
-          return cellSectValue
+        let matches = page.fullTextAnnotation.text.match(re)
+        if (matches) {
+          for (let j = 0; j < matches.length; j++) {
+            let match = matches[j]
+            if (match.match(/\n/)) {
+              return ''
+            }
+            stringCount++
+            if (stringCount === maxStringCount) {
+              cellSectValue = match
+              return cellSectValue
+            }
+          }
         }    
       }
     }

@@ -26,7 +26,9 @@ const getUser = async () => {
 const getRecurringDocs = async (userID) => {
   const recurringDocsSeed = await fsPromises.readFile(__dirname + '/seeds/database/docs.json')
   await Promise.all(JSON.parse(recurringDocsSeed).map(async recurringDoc => {
-    await postService.post({ ...recurringDoc, user: { id: userID }})
+    if (recurringDoc.name !== 'TIF.tif') {
+      await postService.post({ ...recurringDoc, user: { id: userID }})
+    }
   }))
   return await postService.findAll({ 'user.id': userID })
 }
@@ -112,7 +114,7 @@ describe('generating data from uploads, starting with text extraction and ending
     await dbConnection.dropCollection('docs')
   })
 
-  test('returns expected status when one doc\'s text does not match any recurringDoc and another doc contains no text', async () => {
+  test('returns expected status when one doc text does not match any recurringDoc and another doc contains no text', async () => {
     const user = await getUser()
     const userID = user._id
     await getRecurringDocs(userID)

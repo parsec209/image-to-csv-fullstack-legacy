@@ -22,7 +22,6 @@ module.exports.validateReqBody = function(body, bodySchema) {
 
 module.exports.validateReqParams = function(param) {
   const result = Joi.string()
-    .min(1)
     .pattern(/^[a-z0-9]+$/)
     .validate(param)
   if (result.hasOwnProperty('error')) {
@@ -55,7 +54,7 @@ module.exports.schemas = {
               stringType: Joi.any().valid('phrase', 'word'),
               phraseOrValue: Joi.string(),
               appendChars: Joi.string(),
-              dateFormat: Joi.string().pattern(/^[-MDY\/\s\,]+$/),
+              dateFormat: Joi.string().pattern(/^[-MDY\/ \,]+$/),
               daysAdded: Joi.number().integer().min(0).max(100),
               notes: Joi.string()
             }).required()
