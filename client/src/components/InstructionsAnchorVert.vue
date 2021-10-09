@@ -1,16 +1,11 @@
 <template>
   <div>
     <p>
-      An <strong>anchor phrase</strong> is a document text string that is expected to always exist in the same position relative to the text value you are seeking.
-      Any string of characters you see in a document can be used as an <i>anchor phrase</i>, as long as those characters are all on the same line and they have no more
-      than one space in between each other. Two or more spaces, or a line break, terminates the phrase. The anchor phrase is typed into the 
-      <strong>search string</strong> form field.
-    </p>
-    <p>
       The <strong>vertical search method</strong> first looks for an <i>anchor phrase</i> of your choosing within the document, and once found, 
       starts counting the <i>string retrieval types</i> located directly beneath the anchor phrase, line by line,  
       until either the max <i>string count</i> is met or the bottom of the page is reached.
     </p>
+    <InstructionsAnchorPhrase/>
     <p>The <strong>string retrieval type</strong> can be either a <i>word</i> or a <i>phrase</i>, and the <i>phrase</i> option is selected by default. 
     <p>A <strong>word</strong>, in the context of <i>string retrieval types</i>, is a group of one or more characters 
       (including special chars) on a single line, with no spaces in between them. A word terminates at a space.  
@@ -45,7 +40,7 @@
     <b-img src="../assets/anchorVert-phrase.png" fluid alt="Fluid image"></b-img>
     <br>
     <br>
-    <p>Anchor phrase (used in scenarios 3 and 4) keyed into the search string form field:</p>
+    <p>Anchor phrase (used in scenarios 3, 4, and 5) keyed into the search string form field:</p>
     <b-img src="../assets/anchorVert-searchString-embedded.png" fluid alt="Fluid image"></b-img>
     <br>
     <br>
@@ -57,13 +52,28 @@
     <b-img src="../assets/anchorVert-phrase-embedded.png" fluid alt="Fluid image"></b-img>
     <br>
     <br>
+    <p><strong>Scenario 5:</strong> Limitation with PDF files (not applicable for GIF or TIFF) </p>
+    <p>Only complete words will be used as the anchor phrase. It is still fine to enter a partial word into the string search field, but if the chars 
+      you enter are part of a larger word, the application will use the complete word as the anchor phrase. 
+      So looking back at scenario 4, if the scanned document is a PDF instead of a GIF or TIFF,
+      the application will use the yellow-highlighted encapsulating word as its anchor phrase. PDFs do not have this limitation with the
+      the horizontal search method.
+    </p>
+    <b-img src="../assets/anchorVert-PDFIssue.png" fluid alt="Fluid image"></b-img>
+    <br>
+    <br>
   </div>
 </template>     
 
 
 <script>
+import InstructionsAnchorPhrase from '../components/InstructionsAnchorPhrase.vue'
+
 export default {
-  name: 'InstructionsAnchorVert'
+  name: 'InstructionsAnchorVert',
+  components: {
+    InstructionsAnchorPhrase
+  }
 }
 </script>
 

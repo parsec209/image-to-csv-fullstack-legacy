@@ -17,9 +17,11 @@ let recurringDocGIFCellValues
 let docTextGIF
 let docTextPDF
 let docTextTIF
+let docTextPDFImage
 let wordListGIF
 let wordListPDF
 let wordListTIF
+let wordListPDFImage
 
 
 const getUserID = async () => {
@@ -66,9 +68,11 @@ beforeAll(async () => {
   docTextGIF = await getDocText('GIF.json') 
   docTextPDF = await getDocText('PDF_editable.json') 
   docTextTIF = await getDocText('TIF.json') 
+  docTextPDFImage = await getDocText('PDF_image.json') 
   wordListGIF = await getWordLists('GIF.json')
   wordListPDF = await getWordLists('PDF_editable.json')
   wordListTIF = await getWordLists('TIF.json')
+  wordListPDFImage = await getWordLists('PDF_image.json')
 })
  
 
@@ -185,17 +189,32 @@ describe('finding the anchor phrase', () => {
 
 describe('getting the anchor phrase coordinates', () => {
 
-  const initCellValueGenerator = () => {
+  const initCellValueGeneratorGIF = () => {
     return new CellValueGenerator(docTextGIF, wordListGIF, recurringDocGIF, '2020/09/01')
   }
+  const initCellValueGeneratorPDFImage = () => {
+    return new CellValueGenerator(docTextPDFImage, wordListPDFImage, recurringDocPDFCellValues, '2020/09/01')
+  }
 
+  //Anchor phrase string: 'ervice Fee'
   test('returns correct anchor phrase coords (with clear tallest char in phrase)', () => {
-    const textFound = initCellValueGenerator().getAnchorPhraseCoords({ pageIndex: 0, startWordIndex: 64, startSymbolIndex: 1, endWordIndex: 65, endSymbolIndex: 2 })
+    const textFound = initCellValueGeneratorGIF().getAnchorPhraseCoords({ pageIndex: 0, startWordIndex: 64, startSymbolIndex: 1, endWordIndex: 65, endSymbolIndex: 2 })
     expect(textFound).toStrictEqual({ 'leftXCoord': 64, 'rightXCoord': 118, 'upperYCoord': 380, 'lowerYCoord': 396 })
   })
+  //Anchor phrase string: '(000) 000-0000'
   test('returns correct anchor phrase coords (with clear lowest char in phrase)', () => {
-    const textFound = initCellValueGenerator().getAnchorPhraseCoords({ pageIndex: 0, startWordIndex: 17, startSymbolIndex: 0, endWordIndex: 20, endSymbolIndex: 7 })
+    const textFound = initCellValueGeneratorGIF().getAnchorPhraseCoords({ pageIndex: 0, startWordIndex: 17, startSymbolIndex: 0, endWordIndex: 20, endSymbolIndex: 7 })
     expect(textFound).toStrictEqual({ 'leftXCoord': 104, 'rightXCoord': 194, 'upperYCoord': 118, 'lowerYCoord': 138 })
+  })
+  //Anchor phrase string: 'bmitted on 01/01/'
+  test('returns correct anchor phrase coords, using word vertices for pdf image (example 1)', () => {
+    const textFound = initCellValueGeneratorPDFImage().getAnchorPhraseCoords({ pageIndex: 0, startWordIndex: 15, startSymbolIndex: 2, endWordIndex: 17, endSymbolIndex: 5 })
+    expect(textFound).toStrictEqual({ 'leftXCoord': 0.14542484283447266, 'rightXCoord': 0.3970588147640228, 'upperYCoord': 0.2525252401828766, 'lowerYCoord': 0.2752525210380554 })
+  })
+  //Anchor phrase string: 'ity, ST 123'
+  test('returns correct anchor phrase coords, using word vertices for pdf image (example 2)', () => {
+    const textFound = initCellValueGeneratorPDFImage().getAnchorPhraseCoords({ pageIndex: 0, startWordIndex: 6, startSymbolIndex: 1, endWordIndex: 9, endSymbolIndex: 2 })
+    expect(textFound).toStrictEqual({ 'leftXCoord': 0.18627451360225677, 'rightXCoord':  0.30228757858276367, 'upperYCoord': 0.11616161465644836, 'lowerYCoord': 0.1376262605190277 })
   })
 })
 
@@ -215,8 +234,7 @@ describe('detecting phrase breaks', () => {
     //Space between 'Unit' and 'price' on page 1 of pdf
     const isBreak = initCellValueGenerator().isPhraseBreak(wordListPDF['words'][0][39], wordListPDF['words'][0][40])
     expect(isBreak).toBeFalse
-  })
- 
+  }) 
 })
 
 

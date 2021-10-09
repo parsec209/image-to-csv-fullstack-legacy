@@ -124,23 +124,41 @@ class CellValueGenerator {
     )
     const { pageIndex, startWordIndex, startSymbolIndex, endWordIndex, endSymbolIndex } = anchorPhraseIndeces
     const page = this.wordList['words'][pageIndex]
+
+    const startWordBoundingBox = page[startWordIndex]['boundingBox']
     const startSymbolBoundingBox = page[startWordIndex]['symbols'][startSymbolIndex]['boundingBox']
-    const vertexType = startSymbolBoundingBox.vertices.length ? 'vertices' : 'normalizedVertices'
-    const leftXCoord = startSymbolBoundingBox[vertexType][0]['x']
-    const rightXCoord = page[endWordIndex]['symbols'][endSymbolIndex]['boundingBox'][vertexType][1]['x']
+    const endWordBoundingBox = page[endWordIndex]['boundingBox']
+    const endSymbolBoundingBox = page[endWordIndex]['symbols'][endSymbolIndex]['boundingBox']
+        
+    const vertexType = startWordBoundingBox.vertices.length ? 'vertices' : 'normalizedVertices'
+
+    const upperLeftXCoord = startSymbolBoundingBox ? startSymbolBoundingBox[vertexType][0]['x'] : startWordBoundingBox[vertexType][0]['x']
+    const lowerLeftXCoord = startSymbolBoundingBox ? startSymbolBoundingBox[vertexType][3]['x'] : startWordBoundingBox[vertexType][3]['x']
+    const upperRightXCoord = endSymbolBoundingBox ? endSymbolBoundingBox[vertexType][1]['x'] : endWordBoundingBox[vertexType][1]['x']
+    const lowerRightXCoord = endSymbolBoundingBox ? endSymbolBoundingBox[vertexType][2]['x'] : endWordBoundingBox[vertexType][2]['x']
+
+    const leftXCoord = upperLeftXCoord < lowerLeftXCoord ? upperLeftXCoord : lowerLeftXCoord
+    const rightXCoord = upperRightXCoord > lowerRightXCoord ? upperRightXCoord : lowerRightXCoord
+
     let upperYCoord = 10000
     let lowerYCoord = 0
     for (let i = startWordIndex; i <= endWordIndex; i++) {
       let word = page[i]
       for (let j = (i === startWordIndex ? startSymbolIndex : 0); j <= (i === endWordIndex ? endSymbolIndex : word.symbols.length - 1); j++) {
         let symbol = word.symbols[j]
-        let upperLeftYCoord = symbol['boundingBox'][vertexType][0]['y']
-        let lowerRightYCoord = symbol['boundingBox'][vertexType][2]['y']
-        if (upperLeftYCoord < upperYCoord) {
-          upperYCoord = upperLeftYCoord
+        let upperLeftYCoord = startSymbolBoundingBox ? symbol['boundingBox'][vertexType][0]['y'] : word['boundingBox'][vertexType][0]['y']
+        let upperRightYCoord = startSymbolBoundingBox ? symbol['boundingBox'][vertexType][1]['y'] : word['boundingBox'][vertexType][1]['y']
+        let lowerLeftYCoord = startSymbolBoundingBox ? symbol['boundingBox'][vertexType][3]['y'] : word['boundingBox'][vertexType][3]['y']
+        let lowerRightYCoord = startSymbolBoundingBox ? symbol['boundingBox'][vertexType][2]['y'] : word['boundingBox'][vertexType][2]['y']
+        let currentUpperYCoord = upperLeftYCoord < upperRightYCoord ? upperLeftYCoord : upperRightYCoord
+        let currentLowerYCoord = lowerLeftYCoord > lowerRightYCoord ? lowerLeftYCoord : lowerRightYCoord
+
+        if (currentUpperYCoord < upperYCoord) {
+          upperYCoord = currentUpperYCoord
         }
-        if (lowerRightYCoord > lowerYCoord) {
-          lowerYCoord = lowerRightYCoord
+       
+        if (currentLowerYCoord > lowerYCoord) {
+          lowerYCoord = currentLowerYCoord
         }
       }
     }
@@ -254,7 +272,7 @@ class CellValueGenerator {
       let word = page[i]
       for (let j = (i === cellSectValueStartWordIndex ? cellSectValueStartSymbolIndex : 0); j < word.symbols.length; j++) {
         let symbol = word['symbols'][j]
-        let vertexType = symbol.boundingBox.vertices.length ? 'vertices' : 'normalizedVertices'
+        let vertexType = word.boundingBox.vertices.length ? 'vertices' : 'normalizedVertices'
         if (recurringDocCellSect.searchOrInputMethod === 'leftPhrase') {
           cellSectValue += symbol.text 
           if (symbol.property && symbol.property.detectedBreak) {
