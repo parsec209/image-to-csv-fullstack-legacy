@@ -52,12 +52,12 @@
     <b-img src="../assets/anchorVert-phrase-embedded.png" fluid alt="Fluid image"></b-img>
     <br>
     <br>
-    <p><strong>Scenario 5:</strong> Limitation with PDF files (not applicable for GIF or TIFF) </p>
-    <p>Only complete words will be used as the anchor phrase. It is still fine to enter a partial word into the string search field, but if the chars 
-      you enter are part of a larger word, the application will use the complete word as the anchor phrase. 
-      So looking back at scenario 4, if the scanned document is a PDF instead of a GIF or TIFF,
-      the application will use the yellow-highlighted encapsulating word as its anchor phrase. PDFs do not have this limitation with the
-      the horizontal search method.
+    <p><strong>Scenario 5:</strong> Limitation with PDF files (does not apply to GIF or TIFF files) </p>
+    <p>If the characters entered into the search string field are found to be part of a larger word within the document text,
+      the application will use the complete word as the anchor phrase. 
+      So, looking back at example 4, if you were to enter that word segment as the anchor phrase, and the text currently being parsed came
+      from a PDF file, the application will use the yellow-highlighted encapsulating word shown below as its anchor phrase. Note that 
+      PDFs do not have this limitation when using the horizontal search method.
     </p>
     <b-img src="../assets/anchorVert-PDFIssue.png" fluid alt="Fluid image"></b-img>
     <br>

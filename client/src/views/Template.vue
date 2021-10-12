@@ -157,7 +157,7 @@
                             <InstructionsAnchorVert/>        
                           </b-popover>
                         </b-form-radio>                              
-                        <b-form-radio v-model="cellSect.searchOrInputMethod.$model" :aria-describedby="searchOrInputMethods" value="pattern">
+                        <b-form-radio v-model="cellSect.searchOrInputMethod.$model" :aria-describedby="searchOrInputMethods" value="pattern" @input="resetCellSect(rowIndex, cellIndex, sectIndex)">
                           Regular expression
                           <b-badge variant="secondary" href="#" id="textPattern-tip">
                             <b-icon icon="question-circle-fill" aria-label="textPattern-tip"></b-icon>
@@ -227,17 +227,17 @@
                         </b-popover>
                       </p>             
                       <b-form-group v-slot="{ stringTypes }">
-                        <b-form-radio v-model="cellSect.stringType.$model" :aria-describedby="stringTypes" value="phrase" :disabled="!cellSect.searchOrInputMethod.$model">
+                        <b-form-radio v-model="cellSect.stringType.$model" :aria-describedby="stringTypes" value="phrase" :disabled="!cellSect.searchOrInputMethod.$model || cellSect.searchOrInputMethod.$model === 'today' || cellSect.searchOrInputMethod.$model === 'customValue' || cellSect.searchOrInputMethod.$model === 'pattern'">
                           Phrase
                         </b-form-radio>
-                        <b-form-radio v-model="cellSect.stringType.$model" :aria-describedby="stringTypes" value="word" :disabled="!cellSect.searchOrInputMethod.$model">
+                        <b-form-radio v-model="cellSect.stringType.$model" :aria-describedby="stringTypes" value="word" :disabled="!cellSect.searchOrInputMethod.$model || cellSect.searchOrInputMethod.$model === 'today' || cellSect.searchOrInputMethod.$model === 'customValue' || cellSect.searchOrInputMethod.$model === 'pattern'">
                           Word
                         </b-form-radio>                                                                     
                       </b-form-group>   
                       <br>
                       <div>
                         <label for="sb-inline-phraseCount">
-                          <strong> String count (1-99) </strong>
+                          <strong> String count (1-100) </strong>
                           <b-badge variant="secondary" href="#" id="addPhraseCount-tip">
                             <b-icon icon="question-circle-fill" aria-label="addPhraseCount-tip"></b-icon>
                           </b-badge>
@@ -249,11 +249,11 @@
                         <b-form-spinbutton 
                           id="sb-inline-phraseCount" 
                           min="1" 
-                          max="99" 
+                          max="100" 
                           step="1" 
                           v-model="cellSect.phraseCount.$model" 
                           inline
-                          :disabled="!cellSect.searchOrInputMethod.$model"
+                          :disabled="!cellSect.searchOrInputMethod.$model || cellSect.searchOrInputMethod.$model === 'today' || cellSect.searchOrInputMethod.$model === 'customValue'"
                         >
                         </b-form-spinbutton>
                       </div>
@@ -304,7 +304,7 @@
                       <br>
                       <div>
                         <label for="sb-inline-daysAdded">
-                          (Optional)<strong> Add days to date (0-99) </strong>
+                          (Optional)<strong> Add days to date (0-100) </strong>
                           <b-badge variant="secondary" href="#" id="addDays-tip">
                             <b-icon icon="question-circle-fill" aria-label="addDays-tip"></b-icon>
                           </b-badge>
@@ -316,7 +316,7 @@
                         <b-form-spinbutton 
                           id="sb-inline-daysAdded" 
                           min="0" 
-                          max="99" 
+                          max="100" 
                           step="1" 
                           v-model="cellSect.daysAdded.$model" 
                           inline
@@ -623,18 +623,24 @@ export default {
 
     resetCellSect(rowIndex, cellIndex, sectIndex) {
       const sect = this.$v.form.dataRows.$each.$iter[rowIndex].dataCells.$each.$iter[cellIndex].cellSects.$each.$iter[sectIndex]
-      if (!sect.searchOrInputMethod.$model) {
-        sect.phraseOrValue.$model = ''
-        sect.phraseCount.$model = 1
+      if (sect.searchOrInputMethod.$model !== 'topPhrase' && sect.searchOrInputMethod.$model !== 'leftPhrase') { 
         sect.stringType.$model = 'phrase'
+      }
+      if (!sect.searchOrInputMethod.$model || sect.searchOrInputMethod.$model === 'today' || sect.searchOrInputMethod.$model === 'customValue') {
+        sect.phraseCount.$model = 1
+      }
+      if (!sect.searchOrInputMethod.$model || sect.searchOrInputMethod.$model === 'today') { 
+        sect.phraseOrValue.$model = ''
+      }
+      if (sect.searchOrInputMethod.$model === 'today') { 
+        sect.phraseOrValue.$reset()
+      }
+      if (!sect.searchOrInputMethod.$model) { 
         sect.appendChars.$model = ''
         sect.dateFormat.$model = ''
         sect.daysAdded.$model = 0
         sect.notes.$model = ''
-        sect.$reset()
-      } else if (sect.searchOrInputMethod.$model === 'today') {
-        sect.phraseOrValue.$model = ''
-        sect.phraseOrValue.$reset()
+        sect.$reset()   
       }
     },
 
