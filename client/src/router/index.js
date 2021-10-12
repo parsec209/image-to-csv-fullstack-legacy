@@ -14,6 +14,7 @@ import Transfers from '../views/Transfers.vue'
 import Index from '../views/Index.vue'
 import Template from '../views/Template.vue'
 import NotFound from '../views/NotFound.vue'
+import Construction from '../views/Construction.vue'
 
 
 
@@ -91,6 +92,11 @@ const routes = [
     path: '*',
     name: 'NotFound',
     component: NotFound
+  },
+  {
+    path: '/construction',
+    name: 'Construction',
+    component: Construction
   }
 ]
 
@@ -113,30 +119,25 @@ router.beforeEach(async (to, from, next) => {
     errMsg = errorHandler(err).message
   }    
 
-  //to instructions page, ok to enter if authenticated or not
-  if (to.name === 'Instructions') {
-    next()
+  if (to.name === 'Instructions' || 
+      to.name === 'NotFound' ||
 
-  //to auth pages, ok to enter if authenticated
-  } else if (to.matched.some(record => record.meta.requiresAuth) && store.getters.user) {
-    next()
-   
-  //to public pages, ok to enter if unauthenticated
-  } else if (!to.matched.some(record => record.meta.requiresAuth) && !store.getters.user && to.name !== 'NotFound') {
-    next()
+      //to auth pages and user authenticated, ok
+      to.matched.some(record => record.meta.requiresAuth) && store.getters.user ||
 
-  //to auth pages, redirect to login if unauthenticated
+      //to public pages and user unauthenticated, ok
+      !to.matched.some(record => record.meta.requiresAuth) && !store.getters.user) {
+      
+      next()
+
+  //to auth pages and user unauthenticated, go back to login with unauthenticated error message
   } else if (to.matched.some(record => record.meta.requiresAuth) && !store.getters.user) {
     next({ name: 'Login', params: { msg: { text: errMsg, context: 'danger' }}})
   
-  //to public pages, redirect to transfers page if authenticated
+  //to public pages and user authenticated, go to main transfer page
   } else if (!to.matched.some(record => record.meta.requiresAuth) && store.getters.user && to.name !== 'NotFound') {
     next({ name: 'Transfers' })
-
-  //to 404 page
-  } else if (to.name === 'NotFound') {
-    next()
-  }
+  } 
 })
 
 

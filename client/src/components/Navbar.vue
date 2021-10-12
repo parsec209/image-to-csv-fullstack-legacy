@@ -50,9 +50,10 @@ export default {
 </script>
 
 
+<style>
 
+.navbar-dark .navbar-nav .nav-link {
+  color: rgba(255,255,255);
+}
 
-
-
-
-
+</style>
