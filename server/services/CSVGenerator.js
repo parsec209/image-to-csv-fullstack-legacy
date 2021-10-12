@@ -75,7 +75,7 @@ const identifyDocText = function(docsText, recurringDocs) {
  */
 const compileData = async function(user, fileBatchID, pageSelections, dateToday) {
   validateArgs(arguments, { 0: schemas.user, 1: schemas.fileBatchID, 2: schemas.pageSelections, 3: Joi.date() })
-  const docs = await bucket.getFiles({ directory: `${user._id}/uploads/${fileBatchID}` })
+  const docs = await bucket.getFiles({ directory: `${user._id}/${fileBatchID}/uploads` })
   const docsText = await Promise.all(docs[0].map(async function(doc) {
     return await getDocText(doc, pageSelections)
   }))

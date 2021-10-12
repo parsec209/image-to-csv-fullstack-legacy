@@ -101,7 +101,7 @@ describe('generating data from uploads, starting with text extraction and ending
 
   const filesAreInCloud = (files, fileBatchID, userID) => {
     return Promise.all(files.map(async (file, index) => {
-      const cloudFile = bucket.file(`${userID}/downloads/${fileBatchID}/${index}.csv`)
+      const cloudFile = bucket.file(`${userID}/${fileBatchID}/downloads/${index}.csv`)
       const exists = await cloudFile.exists()
       return exists[0] 
     }))
@@ -120,13 +120,13 @@ describe('generating data from uploads, starting with text extraction and ending
     await getRecurringDocs(userID)
     const fileBatchID = uuidv4()
     const options1 = {
-      destination: `${userID}/uploads/${fileBatchID}/blankFile.tiff`,
+      destination: `${userID}/${fileBatchID}/uploads/blankFile.tiff`,
       metadata: {
         contentType: 'image/tiff'
       }
     }
     const options2 = {
-      destination: `${userID}/uploads/${fileBatchID}/TIF.tif`,
+      destination: `${userID}/${fileBatchID}/uploads/TIF.tif`,
       metadata: {
         contentType: 'image/tiff'
       }
@@ -148,19 +148,19 @@ describe('generating data from uploads, starting with text extraction and ending
     await getRecurringDocs(userID)
     const fileBatchID = uuidv4()
     const options1 = {
-      destination: `${userID}/uploads/${fileBatchID}/PDF_editable.pdf`,
+      destination: `${userID}/${fileBatchID}/uploads/PDF_editable.pdf`,
       metadata: {
         contentType: 'application/pdf'
       }
     }
     const options2 = {
-      destination: `${userID}/uploads/${fileBatchID}/TIF.tif`,
+      destination: `${userID}/${fileBatchID}/uploads/TIF.tif`,
       metadata: {
         contentType: 'image/tiff'
       }
     }
     const options3 = {
-      destination: `${userID}/uploads/${fileBatchID}/GIF.GIF`,
+      destination: `${userID}/${fileBatchID}/uploads/GIF.GIF`,
       metadata: {
         contentType: 'image/gif'
       }

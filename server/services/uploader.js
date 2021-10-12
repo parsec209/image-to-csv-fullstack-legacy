@@ -64,7 +64,7 @@ class Uploader {
     validateArgs(arguments, { 0: schemas.user, 1: schemas.fileBatchID })
     await Promise.all(this.files.map(function(file) {
       return new Promise(function(resolve, reject) {
-        const blob = bucket.file(`${user._id}/uploads/${fileBatchID}/${file.originalname}`)
+        const blob = bucket.file(`${user._id}/${fileBatchID}/uploads/${file.originalname}`)
         const blobStream = blob.createWriteStream({ 
           metadata: { contentType: file.mimetype } 
         })

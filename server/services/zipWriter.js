@@ -39,9 +39,9 @@ class ZipWriter {
   async createZip() {
     const results = await zipBucket({ 
       fromBucket: process.env.STORAGE_BUCKET, 
-      fromPath: `${this.user._id}/downloads/${this.fileBatchID}`, 
+      fromPath: `${this.user._id}/${this.fileBatchID}/downloads`, 
       toBucket: process.env.STORAGE_BUCKET, 
-      toPath: `${this.user._id}/downloads/${this.fileBatchID}/CSVFiles.zip`  
+      toPath: `${this.user._id}/${this.fileBatchID}/downloads/CSVFiles.zip`  
     })
     if (!results.manifest.length) {
       throw new InputError('Unable to create zip file due to either file batch ID or CSV files not existing', 404)
@@ -55,7 +55,7 @@ class ZipWriter {
    * @returns {Promise<string>} - URL
    */
   async getURL() {
-    const file = bucket.file(`${this.user._id}/downloads/${this.fileBatchID}/CSVFiles.zip`) 
+    const file = bucket.file(`${this.user._id}/${this.fileBatchID}/downloads/CSVFiles.zip`) 
     //url expires in 30 seconds
     const expireDate = new Date().getTime() + 30000
     const url = await file.getSignedUrl({

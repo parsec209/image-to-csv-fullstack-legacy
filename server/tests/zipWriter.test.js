@@ -20,7 +20,7 @@ const getUser = async () => {
 
 const uploadCSVFiles = async (userID, fileBatchID) => {
   await Promise.all([0, 1].map(async fileNumber => {
-    await bucket.upload(__dirname + `/seeds/downloads/${fileNumber}.csv`, { destination: `${userID}/downloads/${fileBatchID}/${fileNumber}.csv` }) 
+    await bucket.upload(__dirname + `/seeds/downloads/${fileNumber}.csv`, { destination: `${userID}/${fileBatchID}/downloads/${fileNumber}.csv` }) 
   }))
 }
 
@@ -63,7 +63,7 @@ describe('creating and providing access to zipped CSV files in GCP', () => {
   test('zip file created in GCP ', async () => {
     const zipWriter = new ZipWriter(user, fileBatchID)
     const results = await zipWriter.createZip()
-    expect(JSON.stringify(results.manifest)).toBe(`[["${user._id}/downloads/${fileBatchID}/0.csv","${fileBatchID}/0.csv"],["${user._id}/downloads/${fileBatchID}/1.csv","${fileBatchID}/1.csv"]]`)
+    expect(JSON.stringify(results.manifest)).toBe(`[["${user._id}/${fileBatchID}/downloads/0.csv","downloads/0.csv"],["${user._id}/${fileBatchID}/downloads/1.csv","downloads/1.csv"]]`)
   })
   test('throws error during zip creation if incorrect fileBatchID supplied', async () => {
     const zipWriter = new ZipWriter(user, uuidv4())
@@ -71,7 +71,7 @@ describe('creating and providing access to zipped CSV files in GCP', () => {
   })
   test('url created for zip file download', async () => {
     const zipWriter = new ZipWriter(user, fileBatchID)
-    await expect(zipWriter.getURL()).resolves.toEqual(expect.stringContaining(`https://storage.googleapis.com/invoices6293_dev/${user._id}/downloads/${fileBatchID}/CSVFiles.zip`))
+    await expect(zipWriter.getURL()).resolves.toEqual(expect.stringContaining(`https://storage.googleapis.com/invoices6293_dev/${user._id}/${fileBatchID}/downloads/CSVFiles.zip`))
   })
 })
 

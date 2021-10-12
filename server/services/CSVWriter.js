@@ -80,7 +80,7 @@ const writeCSVFiles = async function(consolidatedBlueprints, userID, fileBatchID
     const header = CSVStringifier.getHeaderString()
     const dataRows = CSVStringifier.stringifyRecords(blueprint.dataRows)
     return new Promise((resolve, reject) => {
-      const blob = bucket.file(`${userID}/downloads/${fileBatchID}/${fileNumber}.csv`)
+      const blob = bucket.file(`${userID}/${fileBatchID}/downloads/${fileNumber}.csv`)
       const blobStream = blob.createWriteStream(
         { 
           metadata: {

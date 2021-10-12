@@ -89,7 +89,7 @@ describe('uploading files to GCP', () => {
     const uploader = new Uploader(reqFiles.valid)
     const filesAreInCloud = (files) => {
       return Promise.all(files.map(async file => {
-        const cloudFile = bucket.file(`${user._id}/uploads/${fileBatchID}/${file.originalname}`)
+        const cloudFile = bucket.file(`${user._id}/${fileBatchID}/uploads/${file.originalname}`)
         const exists = await cloudFile.exists()
         return exists[0] 
       }))

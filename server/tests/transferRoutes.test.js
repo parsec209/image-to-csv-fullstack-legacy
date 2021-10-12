@@ -81,7 +81,7 @@ describe('POST /api/transfers/upload', () => {
 describe('POST /api/transfers/extract', () => {
   test('responds with doc identification status', async () => {
     const fileBatchID = uuidv4()
-    await bucket.upload(__dirname + '/seeds/uploads/cloud/validExts/GIF.GIF', { destination: `${userID}/uploads/${fileBatchID}/GIF.GIF`, metadata: { contentType: 'image/gif' }})
+    await bucket.upload(__dirname + '/seeds/uploads/cloud/validExts/GIF.GIF', { destination: `${userID}/${fileBatchID}/uploads/GIF.GIF`, metadata: { contentType: 'image/gif' }})
     const response = await agent
       .post('/api/transfers/extract')
       .send({
@@ -106,7 +106,7 @@ describe('POST /api/transfers/extract', () => {
   })
   test('handles invalid page error', async () => {
     const fileBatchID = uuidv4()
-    await bucket.upload(__dirname + '/seeds/uploads/cloud/validExts/GIF.GIF', { destination: `${userID}/uploads/${fileBatchID}/GIF.GIF`, metadata: { contentType: 'image/gif' }})
+    await bucket.upload(__dirname + '/seeds/uploads/cloud/validExts/GIF.GIF', { destination: `${userID}/${fileBatchID}/uploads/GIF.GIF`, metadata: { contentType: 'image/gif' }})
     const response = await agent
       .post('/api/transfers/extract')
       .send({
@@ -124,14 +124,14 @@ describe('POST /api/transfers/write', () => {
   test('responds with zip URL', async () => {
     const fileBatchID = uuidv4()
     await Promise.all([0, 1].map(async fileNumber => 
-      await bucket.upload(__dirname + `/seeds/downloads/${fileNumber}.csv`, { destination: `${userID}/downloads/${fileBatchID}/${fileNumber}.csv` }) 
+      await bucket.upload(__dirname + `/seeds/downloads/${fileNumber}.csv`, { destination: `${userID}/${fileBatchID}/downloads/${fileNumber}.csv` }) 
     ))
     const response = await agent
       .post('/api/transfers/write')
       .send({
         fileBatchID
       })
-    expect(response.body).toEqual(expect.stringContaining(`https://storage.googleapis.com/invoices6293_dev/${userID}/downloads/${fileBatchID}/CSVFiles.zip`))
+    expect(response.body).toEqual(expect.stringContaining(`https://storage.googleapis.com/invoices6293_dev/${userID}/${fileBatchID}/downloads/CSVFiles.zip`))
     expect(response.statusCode).toBe(200)
   })
   test('handles request body validation errors (invalid fileBatchID)', async () => {

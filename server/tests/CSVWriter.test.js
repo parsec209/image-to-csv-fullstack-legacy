@@ -92,7 +92,7 @@ describe('writing CSV files and uploading them to GCP', () => {
     const fileBatchID = uuidv4()
     const filesAreInCloud = (files) => {
       return Promise.all(files.map(async (file, index) => {
-        const cloudFile = bucket.file(`${userID}/downloads/${fileBatchID}/${index}.csv`)
+        const cloudFile = bucket.file(`${userID}/${fileBatchID}/downloads/${index}.csv`)
         const exists = await cloudFile.exists()
         return exists[0] 
       }))
