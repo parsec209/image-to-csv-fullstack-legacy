@@ -5,6 +5,7 @@ module.exports = (dbConnection) => {
   const passport = require('passport')
   const session = require('express-session')
   const MongoStore = require('connect-mongo')(session)
+  const mongoSanitize = require('express-mongo-sanitize')
   const morgan = require('morgan')
   const logger = require('../config/logger')
   const User = require('../models/user')
@@ -20,6 +21,7 @@ module.exports = (dbConnection) => {
 
   app.use(express.urlencoded({extended: true}))
   app.use(express.json())
+  app.use(mongoSanitize())
 
   
   //session config
