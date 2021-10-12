@@ -39,7 +39,7 @@
               <b-form-group>
                 <b-form-file
                   id="file-input"
-                  placeholder="Select up to ten files, 10MB max per file"
+                  placeholder="Select up to 20 files, 10MB max per file"
                   v-model="$v.form.files.$model" 
                   accept=".TIF, .tiff, .gif, .pdf"
                   :state="validateState('files')"
@@ -53,7 +53,7 @@
                 <b-form-invalid-feedback id="files-live-feedback">Invalid file size or number of files</b-form-invalid-feedback>
               </b-form-group>
               <b-button class="my-2" variant="secondary" @click="resetFiles" :disabled="isProcessing">Reset</b-button>
-              <p class="mb-1" v-for="file in form.files" :key="file.name"> 
+              <p class="mb-3" v-for="file in form.files" :key="file.name"> 
                 {{ file.name + ', ' + getFileSize(file.size) }}
               </p>
               <br>
@@ -113,7 +113,7 @@ export default {
       },
       files: { 
         required,
-        maxLength: maxLength(10),
+        maxLength: maxLength(20),
         $each: {
           size: {
             maxValue: maxValue(10 * 1024 * 1024)
