@@ -25,9 +25,9 @@
           specific records/fields of a generated CSV file. The ideal candidate for a recurring document is one that is
           received regularly (i.e. a specific invoice from a vendor) and that has predictable characteristics in its text and formatting each time it is received. 
           In general, the only thing that should really change between each recurring document is the metadata values you need for the CSV file (i.e. invoice number, balance due, etc.).
-          The use of <i>anchor phrases</i> (i.e. getting a value located next to a field name in an image) and <i>regular expressions</i> (predictable text patterns) are the two
-          text retrieval methods this application uses, and there is also the option to have CSV fields contain values not found in the text, such as a user-specified input
-          or today's date. Additional features can be added to the values, such as date formatting (if the value is recognized as a date), adding days to a date, 
+          The use of <i>anchor phrases</i> (text that is positioned predictably in the image relative to other text) and <i>regular expressions</i> (predictable text patterns) are the two
+          text retrieval methods this application uses. However, not all of the CSV values have to be found within the document text, 
+          there can also be user-specified custom values, or even Excel formulas that evaluate when the CSV file is opened in Excel. Additional features can be added to the values, such as date formatting (if the value is recognized as a date), adding days to a date, 
           or character appendage to the end of a value. Lastly, there is the flexibility to combine multiple pieces of metadata together into a single CSV field. For example,
           you can use one rule for retrieving a statement number and another rule for the statement date, and combine these two values together into a single CSV field with a hyphen
           in between them (using the character appendage feature previously mentioned).
